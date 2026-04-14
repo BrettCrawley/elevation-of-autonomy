@@ -164,14 +164,14 @@ Skip if the system has no agentic components. For anything with tool use, long-t
 - [ ] **ASI09 Human-Agent Trust Exploitation.** "What does the agent produce that a human will act on without checking? What provenance does the UI show?"
 - [ ] **ASI10 Rogue Agents.** "How would you know if an unauthorised agent was running in this environment? How would you kill it?"
 
-### Pass 2: Non-adversarial hazards
+### Pass 2: Structural hazards
 
 **Time box: 15 minutes.**
 
 These are the failures that happen without an attacker and that the OWASP lists miss. Short pass, but do not skip it.
 
 - [ ] **Context rot.** "What is the longest realistic session for this system? At that length, which security-critical instructions are at risk of being attentionally lost? Which tool constraints, which authorisation scopes, which content rules?"
-- [ ] **Hallucination as a non-adversarial failure.** "Where in the workflow does the model generate content that will be read, indexed, persisted, or acted upon without verification?"
+- [ ] **Hallucination as a structural failure.** "Where in the workflow does the model generate content that will be read, indexed, persisted, or acted upon without verification?"
 - [ ] **Transferable decision boundaries.** "What security guarantees are we relying on the model itself to provide? If the answer is 'robustness against adversarial inputs', write that down as an assumed-broken control and move the guarantee to a deterministic layer."
 - [ ] **Geometric adversarial attacks.** "Does this system expose a classifier or matcher whose output gates a decision? If yes, can an attacker probe it with queries? Is the hard label the only signal returned? Does the model use non-Euclidean geometry (hyperbolic, spherical, angular-margin)? If yes, is our adversarial testing matched to that geometry?"
 - [ ] **Adversarial subspace problem.** "Are we using a prompt library, blocklist, or pattern-match as a primary defence against prompt injection or jailbreak? If yes, flag as a subspace-problem failure and escalate the mitigation to structural. Is our security guarantee architectural (downstream deterministic enforcement) or statistical (guardrails that pattern-match)?"
@@ -246,7 +246,7 @@ If any server fails three or more of these questions, it should not be installed
 
 A list of threats, each with:
 
-- An ID mapped to an OWASP entry, a LINDDUN category, a T.R.I.M. card, or a non-adversarial label.
+- An ID mapped to an OWASP entry, a LINDDUN category, a T.R.I.M. card, or a structural-hazard label.
 - A system-specific example.
 - The DFD component(s) affected.
 - A likelihood/impact rating.
@@ -315,7 +315,7 @@ This is the phase most sessions skip, and it is the phase the Manifesto puts the
 **Question 2 evidence.**
 
 - [ ] Every threat is traceable to a DFD component.
-- [ ] All four lenses (adversarial, non-adversarial, privacy, MCP) have been applied where relevant.
+- [ ] All four lenses (adversarial, structural, privacy, MCP) have been applied where relevant.
 - [ ] Every threat has a system-specific example, not a generic one.
 - [ ] The team can name threats they considered and rejected, not just ones they found.
 
@@ -387,7 +387,7 @@ If you remember nothing else, ask these five questions on every AI system you th
 1. **What does the model read?** Every channel through which text reaches the model is a potential injection vector. (LLM01)
 2. **What can the model do?** Every tool, every action with a side effect, every downstream consumer of model output. (LLM05, LLM06, ASI02, ASI05)
 3. **Whose credentials is it using?** Every agent, every MCP server, every service account. (LLM06, ASI03)
-4. **What happens when it is wrong?** Hallucinations, context rot, cascading failures. (LLM09, non-adversarial hazards)
+4. **What happens when it is wrong?** Hallucinations, context rot, cascading failures. (LLM09, structural hazards)
 5. **Can we delete personal data from every store it touches?** Memory, RAG, logs, caches. (LINDDUN unintervenability, T.R.I.M. Retention/Removal, GDPR Article 16/17)
 6. **If the model's refusal or classification is the security guarantee, what replaces it when the subspace problem or a transfer attack bypasses it?** If there is no answer, the design is wrong.
 
@@ -400,7 +400,7 @@ A session that answers these five questions well, for any AI system, is already 
 By the end of a session run using this runbook, you should have:
 
 - A DFD of the system as it will actually ship.
-- A threat list covering adversarial, non-adversarial, privacy, and MCP concerns, each with system-specific examples.
+- A threat list covering adversarial, structural, privacy, and MCP concerns, each with system-specific examples.
 - A mitigation matrix with owners, deadlines, and decisions.
 - Explicit evidence that the four Manifesto questions have been answered.
 - A versioned artefact and a trigger for the next review.

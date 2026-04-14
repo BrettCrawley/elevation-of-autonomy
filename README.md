@@ -1,9 +1,6 @@
-![Elevation of Autonomy](elevation-of-autonomy-cover.png)
-
-
 # Threat Modelling AI Systems: A Complete Playbook for Practitioners
 
-*The Blast Radius — Edition 4*
+*The Blast Radius — Edition [N]*
 
 Over the past few weeks I've been building out a practical toolkit for threat modelling AI, LLM and agentic systems. The current state of advice in this space ranges from the abstract (OWASP lists) to the theatrical ("AI red teaming" that tests the wrong thing). Neither is much use to an engineer sitting in a design review on Tuesday morning trying to work out whether their new feature should ship.
 
@@ -41,7 +38,7 @@ What remains is structural. Deterministic enforcement outside the model. Authori
 
 ## The four pieces
 
-**The reference document** walks the OWASP LLM Top 10 (2025) and the new OWASP Agentic Top 10 (ASI01 to ASI10, December 2025) against a realistic internal developer productivity agent I call DevAssist. It adds the two non-adversarial hazards the OWASP lists miss — context rot from Chroma's 2025 research, and transferable decision boundaries from the Tramèr et al. work popularised by Shoshana Cox — and it walks privacy through LINDDUN, T.R.I.M. (the F-Secure card categories: Transfer, Retention/Removal, Inference, Minimisation), and GDPR Article 5. Structured around the Threat Modeling Manifesto's four questions.
+**The reference document** walks the OWASP LLM Top 10 (2025) and the new OWASP Agentic Top 10 (ASI01 to ASI10, December 2025) against a realistic internal developer productivity agent I call DevAssist. It adds the structural hazards the OWASP lists miss — context rot from Chroma's 2025 research, and transferable decision boundaries from the Tramèr et al. work popularised by Shoshana Cox — and it walks privacy through LINDDUN, T.R.I.M. (the F-Secure card categories: Transfer, Retention/Removal, Inference, Minimisation), and GDPR Article 5. Structured around the Threat Modeling Manifesto's four questions.
 
 **The facilitator's runbook** turns all of that into a session you can actually run, with time boxes, verbatim prompts, red flags to watch for, and a "five questions you must ask every session" quick reference for when the full treatment is overkill.
 
@@ -55,13 +52,13 @@ I'll link the three documents at the end. The cards and supporting examples are 
 
 The design brief I set myself: cards abstract enough that they don't age with the tech stack, concrete enough that a team can actually play them, and slotted alongside EoP and Elevation of Privacy rather than replacing them. The threats are the stable layer. Examples and mitigations live in supporting material that updates independently — the same split I used in *Threat Modeling Gameplay with EoP*.
 
-Twenty-seven cards in five suits. Four suits of five cards mirror EoP's structure, plus a trumps suit for non-adversarial hazards.
+Thirty cards in five suits. Four suits mirror EoP's structure — five cards each for Hearts and Clubs, six cards each for Spades and Diamonds where MCP threats sit — plus a trumps suit of seven structural hazards that the other four suits cannot reach.
 
 - **♠ Spades — Adversarial Threats.** Direct attacks on the model and agent.
 - **♥ Hearts — Autonomy Threats.** Risks introduced by giving the system the ability to act.
 - **♦ Diamonds — Data Threats.** Risks to and through the data the system handles.
 - **♣ Clubs — Privacy Threats.** From T.R.I.M. and LINDDUN, framed for the AI era.
-- **★ Trumps — Non-Adversarial Hazards.** Failures without an attacker.
+- **★ Trumps — Structural Hazards.** Architectural and mathematical properties that cannot be mitigated inside the model.
 
 Each card follows the format from my book: card name, card description quote, example threat, reference mapping (OWASP LLM, ASI, LINDDUN, T.R.I.M., CAPEC where applicable), and suggested mitigations.
 
@@ -288,7 +285,7 @@ Each card follows the format from my book: card name, card description quote, ex
 
 **Mitigations.** Transparency in the privacy notice. Subject access process that covers model-generated outputs. Rectification mechanism that persists across sessions.
 
-## The ★ Trumps suit — Non-Adversarial Hazards (well almost)
+## The Trumps suit — Structural Hazards
 
 ### ★7 — Adversarial Subspace
 

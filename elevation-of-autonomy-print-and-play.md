@@ -20,13 +20,13 @@ This is version 0.1 and I am releasing it as a play-test draft. Feedback welcome
 
 ## Deck composition
 
-**27 cards across 5 suits:**
+**30 cards across 5 suits:**
 
-- **♠ Spades — Adversarial Threats** (5 cards, A K Q J 10)
-- **♥ Hearts — Autonomy Threats** (5 cards, A K Q J 10)
-- **♦ Diamonds — Data Threats** (5 cards, A K Q J 10)
+- **♠ Spades — Adversarial Threats** (6 cards, A K Q J 10 9)
+- **♥ Hearts — Autonomy Threats** (6 cards, A K Q J 10 9)
+- **♦ Diamonds — Data Threats** (6 cards, A K Q J 10 9)
 - **♣ Clubs — Privacy Threats** (5 cards, A K Q J 10)
-- **★ Trumps — Non-Adversarial Hazards** (7 cards, numbered 1–7)
+- **★ Trumps — Structural Hazards** (7 cards, numbered 1–7)
 
 High cards within a suit indicate broader or more foundational threats; lower cards indicate more specific or variant threats. Trumps beat any non-trump card of any rank.
 
@@ -39,7 +39,7 @@ The rules follow EoP closely. If you have played EoP, you can play this immediat
 ### Setup
 
 - 3 to 6 players. Best with 4.
-- Deal all 27 cards as evenly as possible. With 4 players, three get 7 cards and one gets 6; the extra card goes to whoever is leading the session.
+- Deal all 30 cards as evenly as possible. With 4 players, two get 8 cards and two get 7; the extra cards go to whoever is leading the session.
 - The system being threat modelled is on a whiteboard or screen visible to all players. Ideally a data flow diagram with trust boundaries.
 - Have the post-session template (or any threat register) open and a scribe nominated.
 
@@ -48,7 +48,7 @@ The rules follow EoP closely. If you have played EoP, you can play this immediat
 1. **The player to the left of the dealer leads** by playing any card and describing how the threat on that card applies to the system being reviewed. The description must be specific — a generic "an attacker could..." does not count. If the player cannot describe a concrete application, they play a different card.
 2. **Play proceeds clockwise.** Each subsequent player must either:
    - Play a card of the same suit with a more concrete or more severe application of that suit's category, OR
-   - Play a trump card with a non-adversarial hazard that applies to the same component, OR
+   - Play a trump card with a structural hazard that applies to the same component, OR
    - Pass and discard a card face-up (only if they genuinely have no applicable card in hand).
 3. **Highest card wins the trick** (trumps beat all non-trump cards). The winner of the trick leads the next one.
 4. **Each accepted threat is recorded** in the threat register with the card ID, the system component affected, and the specific example given. A proposed mitigation is agreed before the next trick is led.
@@ -128,6 +128,16 @@ A print-and-play PDF will follow in a later version. For now, cards are listed i
 
 **Mitigation prompts.** Which consumers of model output exist, and what do they assume? Where is output sanitised, encoded, or structured? Are there rendering paths that fetch remote content?
 
+### ♠9 — Tool Description Injection
+
+> *"The tool description is itself a prompt."*
+
+**Threat.** An MCP server (or equivalent tool registry) supplies tool descriptions and parameter schemas that arrive in the model's context as instructions. A hostile or compromised server can inject prompts via the description field itself — not just the tool's return value. The "rug pull" variant mutates the description after the user has approved the tool, so the approved version and the live version diverge silently.
+
+**References.** OWASP LLM01 indirect injection. ASI01. ASI04. MCP-specific.
+
+**Mitigation prompts.** Are tool descriptions pinned and integrity-checked between approval and use? What happens when a server updates a description silently? Are descriptions delimited from user prompts in the model's context? Does any tool have a description that contains imperative language?
+
 ---
 
 ## ♥ Hearts — Autonomy Threats
@@ -182,6 +192,16 @@ A print-and-play PDF will follow in a later version. For now, cards are listed i
 
 **Mitigation prompts.** Is there an agent inventory? How is anomalous behaviour detected? What is the kill-switch latency?
 
+### ♥9 — Confused Deputy Across Servers
+
+> *"Two MCP servers in one client share a context they should not share."*
+
+**Threat.** An MCP client is connected to multiple servers concurrently. One server's tool can shadow another's by exposing a tool with the same or similar name, intercepting calls intended elsewhere. One server can read context, approvals, or tool results that belong to another. The client becomes a confused deputy, brokering authority between mutually distrusting servers.
+
+**References.** ASI03 cross-context. ASI07 inter-component trust. CAPEC-141.
+
+**Mitigation prompts.** Are tools namespaced per server? Can two servers register the same tool name? Is each server's context isolated from the others? Does the user see which server a tool call is going to, in language they can verify? What happens when servers are added or removed mid-session?
+
 ---
 
 ## ♦ Diamonds — Data Threats
@@ -235,6 +255,16 @@ A print-and-play PDF will follow in a later version. For now, cards are listed i
 **References.** OWASP LLM07.
 
 **Mitigation prompts.** What is in the system prompt that should not be? What happens if the whole prompt leaks tomorrow?
+
+### ♦9 — Server Impersonation and Rogue Servers
+
+> *"Every byte of your prompt and every tool result flows through that server."*
+
+**Threat.** An MCP server is typosquatted, hijacked, or stood up adversarially in a registry the client trusts. Once connected, it sees every prompt routed to its tools, every credential or token shared with it, and every return value. Data exfiltration is the primary risk; tool-output tampering is the secondary risk. The transport (stdio vs HTTP) changes the attack surface but not the underlying problem.
+
+**References.** OWASP LLM03 supply chain. ASI04. MCP-specific.
+
+**Mitigation prompts.** How is the server identified — by name, by signature, by pinned hash? What is the source of truth for the registry? What credentials and data does each server see? Is HTTP transport authenticated and bound to a specific origin? What happens if a server is silently replaced?
 
 ---
 
@@ -292,9 +322,9 @@ A print-and-play PDF will follow in a later version. For now, cards are listed i
 
 ---
 
-## ★ Trumps — Non-Adversarial Hazards
+## ★ Trumps — Structural Hazards
 
-Trumps beat any non-trump card. They represent failures that happen without an attacker and that the OWASP lists do not catch.
+Trumps beat any non-trump card. They represent structural properties of AI systems — architectural, mathematical, or product-design failures — that cannot be mitigated inside the model itself. The OWASP lists do not catch them because the OWASP framing assumes the model's behaviour is itself the defence; these cards exist because, for this class of threat, it cannot be.
 
 ### ★7 — Adversarial Subspace
 
@@ -381,8 +411,10 @@ Trumps beat any non-trump card. They represent failures that happen without an a
 
 - Record which cards produced good threats and which did not. After three to five sessions, some cards will stand out as over- or under-powered. Prune the deck accordingly and submit feedback upstream.
 - If your system has recurring characteristics — for example, multiple MCP servers or complex multi-agent orchestration — consider building local custom cards for the patterns that matter most to your environment.
-- The deck is intentionally small. Twenty-seven cards is fewer than EoP's seventy-four. This is deliberate: the AI threat surface is less mature and the abstractions are still being refined. A smaller deck plays faster and is easier to iterate.
+- The deck is intentionally small. Thirty cards is fewer than EoP's seventy-four. This is deliberate: the AI threat surface is less mature and the abstractions are still being refined. A smaller deck plays faster and is easier to iterate.
 - If your team repeatedly plays trumps (especially Trump 6 and Trump 7) against the same system component, that component is architecturally mis-placed. A single component drawing geometric attack and subspace cards on every pass is a component where the model is carrying a security guarantee it cannot carry. Escalate to the architect.
+- The 9-rank cards in Spades, Hearts, and Diamonds (Tool Description Injection, Confused Deputy Across Servers, Server Impersonation) target the MCP threat surface specifically. If your system uses MCP — and increasingly, most agentic systems do — make sure the team has read those three cards before the session starts. They are harder to apply cold than the other cards because the threat surface is newer and the vocabulary is less settled. A two-minute walk-through at the top of the session pays back.
+- If your system uses MCP but the 9-rank cards are not being played, that is itself a red flag. Either the DFD has collapsed the MCP servers into a single opaque box (open it), or the team has not internalised that tool descriptions, server registries, and cross-server contexts are all attack surfaces. Consider calling Spotlight (see house rules) on each MCP server in turn.
 
 ### Feedback
 
@@ -402,7 +434,7 @@ Elevation of Autonomy builds on work by many people, and I want to credit them c
 
 **Foundational adversarial ML research.** Goodfellow, Shlens, and Szegedy (2015) for "Explaining and Harnessing Adversarial Examples". Tramèr, Papernot, Goodfellow, Boneh, and McDaniel (2017) for "The Space of Transferable Adversarial Examples". Madry, Makelov, Schmidt, Tsipras, and Vladu (2017) for "Towards Deep Learning Models Resistant to Adversarial Attacks" and the PGD attack. Guo, Gong, Lin, Yang, and Zhang (2024) for "Adversarial Hypervolume". These papers shaped the conceptual content of several cards, particularly in the Trumps suit.
 
-**Non-adversarial hazards research.** Chroma Research (Hong, Troynikov, Huber, 2025) for the "Context Rot" study that forms the basis of Trump 5. Liu et al. (2023) on lost-in-the-middle effects. Both underlie the Context Rot card.
+**Structural hazards research.** Chroma Research (Hong, Troynikov, Huber, 2025) for the "Context Rot" study that forms the basis of Trump 5. Liu et al. (2023) on lost-in-the-middle effects. Both underlie the Context Rot card. The broader "structural over statistical" framing owes to the Cox and Bunzel (2025) work on transferability and subspace quantification, which anchors Trumps 6 and 7.
 
 **Geometric adversarial attacks.** Rahmati et al. (2020) for GeoDA. Maho, Furon, and Le Merrer (2021) for SurFree. Jo, Kim, and Park (2025) for the Angular Gradient Sign Method. Deng et al. (2019) for ArcFace and the angular-margin tradition. These inform Trump 6.
 

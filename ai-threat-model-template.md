@@ -174,10 +174,10 @@ flowchart TB
 - [ ] **ASI09 Human-Agent Trust Exploitation** — IDs: *[list]*
 - [ ] **ASI10 Rogue Agents** — IDs: *[list]*
 
-#### Non-adversarial hazards
+#### Structural hazards
 
 - [ ] **Context rot** — IDs: *[list]*
-- [ ] **Hallucination (non-adversarial)** — IDs: *[list]*
+- [ ] **Hallucination (structural)** — IDs: *[list]*
 - [ ] **Transferable decision boundaries** — IDs: *[list or "acknowledged as assumed-broken control, see mitigation X"]*
 - [ ] **Decision-boundary probing attacks** — IDs: *[list or "acknowledged, deterministic gate downstream of classifier"]*
 - [ ] **Geometry-aware attacks on non-Euclidean models** — IDs: *[list or N/A if Euclidean only]*
@@ -327,9 +327,9 @@ flowchart TB
 
 - [ ] Every threat traceable to a DFD component
 - [ ] Every threat has a system-specific example, not a generic one
-- [ ] All four lenses applied where relevant (adversarial, non-adversarial, privacy, MCP)
+- [ ] All four lenses applied where relevant (adversarial, structural, privacy, MCP)
 - [ ] Rejected threats captured alongside accepted ones (to show walked surface)
-- [ ] Non-adversarial hazards explicitly considered (context rot, hallucination, transferability)
+- [ ] Structural hazards explicitly considered (context rot, hallucination, transferability)
 
 #### Question 3 — What are we going to do about it?
 

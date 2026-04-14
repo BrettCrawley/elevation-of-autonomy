@@ -11,7 +11,7 @@
 
 The short-form rules shipped in the *Print and Play* document are enough to get a table playing inside five minutes. This is the long version. It covers the edge cases I've already been asked about ("what if two players want to play the same trick?"), the variant rules worth trying once you've played three or four games, and a handful of worked examples that anchor what "applying a card well" actually looks like.
 
-If you have played *Elevation of Privilege* (EoP) or *Elevation of Privacy*, almost everything here will feel familiar. Where Elevation of Autonomy diverges — mostly in the Trumps suit and in the handling of non-adversarial hazards — I've called it out explicitly.
+If you have played *Elevation of Privilege* (EoP) or *Elevation of Privacy*, almost everything here will feel familiar. Where Elevation of Autonomy diverges — mostly in the Trumps suit and in the handling of structural hazards — I've called it out explicitly.
 
 ---
 
@@ -28,13 +28,15 @@ If you have played *Elevation of Privilege* (EoP) or *Elevation of Privacy*, alm
 
 ## Deck composition recap
 
-27 cards across 5 suits:
+30 cards across 5 suits:
 
-- **♠ Spades — Adversarial Threats** (5 cards: A, K, Q, J, 10)
-- **♥ Hearts — Autonomy Threats** (5 cards: A, K, Q, J, 10)
-- **♦ Diamonds — Data Threats** (5 cards: A, K, Q, J, 10)
+- **♠ Spades — Adversarial Threats** (6 cards: A, K, Q, J, 10, 9)
+- **♥ Hearts — Autonomy Threats** (6 cards: A, K, Q, J, 10, 9)
+- **♦ Diamonds — Data Threats** (6 cards: A, K, Q, J, 10, 9)
 - **♣ Clubs — Privacy Threats** (5 cards: A, K, Q, J, 10)
-- **★ Trumps — Non-Adversarial Hazards** (7 cards: I, II, III, IV, V, VI, VII)
+- **★ Trumps — Structural Hazards** (7 cards: I, II, III, IV, V, VI, VII)
+
+The 9-rank cards in Spades, Hearts, and Diamonds cover MCP-specific threats — tool description injection, confused deputy across servers, and server impersonation. They were added in v0.1 after the initial design review surfaced the gap. Future versions may rebalance further as the MCP threat surface is mapped.
 
 High ranks (A, K) indicate broader or more foundational threats. Low ranks (10 within a suit; lower Roman numerals in Trumps) indicate more specific or variant threats. Trumps beat any non-trump card regardless of rank.
 
@@ -42,11 +44,11 @@ High ranks (A, K) indicate broader or more foundational threats. Low ranks (10 w
 
 ## Setup
 
-1. Pick a dealer. The dealer hands out all 27 cards as evenly as possible.
-   - With **3 players**: each gets 9 cards.
-   - With **4 players**: three players get 7 cards and one gets 6. The extra card goes to whoever is leading the session (typically the facilitator) so they can guide the opening trick.
-   - With **5 players**: two players get 6 cards and three get 5.
-   - With **6 players**: three players get 5 cards and three get 4.
+1. Pick a dealer. The dealer hands out all 30 cards as evenly as possible.
+   - With **3 players**: each gets 10 cards.
+   - With **4 players**: two players get 8 cards and two get 7. The extra cards go to whoever is leading the session (typically the facilitator) so they can guide the opening trick.
+   - With **5 players**: each gets 6 cards.
+   - With **6 players**: each gets 5 cards.
 2. Place the system's data flow diagram where everyone can see it.
 3. Open the post-session template (or threat register) and confirm the scribe.
 4. Read the short-form rules aloud. Yes, even to EoP veterans — the Trump structure differs.
@@ -62,7 +64,7 @@ A "trick" is one round where every player plays exactly one card.
 1. **The lead player plays a card face-up** and describes, in concrete terms, how the threat on that card applies to the system on the DFD. The description must name the component, the trust boundary, or the data flow it targets. A generic "someone could inject something" does not count. If the lead cannot describe a concrete application, they choose a different card or — as a last resort — pass (see *Passing* below).
 2. **Play proceeds clockwise.** Each subsequent player must do one of the following:
    - **Follow suit** with a card of the same suit that represents a more concrete or more severe application of that category against the system. Higher rank cards beat lower rank cards in the same suit.
-   - **Play a trump** (any ★ card) representing a non-adversarial hazard that applies to the same component or flow. Any trump beats any non-trump card.
+   - **Play a trump** (any ★ card) representing a structural hazard that applies to the same component or flow. Any trump beats any non-trump card.
    - **Pass**, discarding a card face-up (see *Passing*).
 3. **The trick is won** by the highest card played: the highest rank of any trump played, or if no trumps were played, the highest rank of the lead suit. The winner takes the trick (keep the cards together for scoring) and leads the next one.
 4. **Every accepted threat is recorded** in the threat register before the next trick is led: the card ID, the component or flow affected, the specific example described, and a proposed mitigation agreed by the table. If you cannot agree on a mitigation in 90 seconds, record the threat with "mitigation: open" and move on. Open threats are the facilitator's job to follow up after the session.
@@ -86,7 +88,7 @@ If the table cannot agree whether a later play was more concrete or more severe,
 
 A player passes by placing one card from their hand face-up in the discard pile. Passed cards do not win the trick, do not score, and cannot be played later.
 
-You may only pass if you genuinely have no applicable card in hand. In practice, with 27 cards spread across 5 categories, real passes are rare — most of the time, a card from another suit can be applied somewhere on the DFD with a bit of thought. I treat passes as a signal that either (a) the player has disengaged, (b) the facilitator needs to redirect attention back to the DFD, or (c) the DFD is too narrow and needs expanding.
+You may only pass if you genuinely have no applicable card in hand. In practice, with 30 cards spread across 5 categories, real passes are rare — most of the time, a card from another suit can be applied somewhere on the DFD with a bit of thought. I treat passes as a signal that either (a) the player has disengaged, (b) the facilitator needs to redirect attention back to the DFD, or (c) the DFD is too narrow and needs expanding.
 
 **Note to facilitators:** if three passes happen in a row, stop the session. Something has gone wrong — usually the scope is unclear, the DFD is stale, or fatigue has set in. Take a break, reset, and resume.
 
@@ -138,7 +140,7 @@ A problem with a small Trumps suit in a card game is that players hoard them and
 
 ### The Designer's Draft
 
-A variant worth trying once: instead of dealing cards randomly, lay all 27 face-up and let players draft hands in snake order (player 1, 2, 3, 4, 4, 3, 2, 1...). This tends to produce tighter, more coherent hands and lets each player focus on the area they know best — but it also reduces the serendipity that makes random deals interesting. Use it for a focused session; don't use it for a team's first session.
+A variant worth trying once: instead of dealing cards randomly, lay all 30 face-up and let players draft hands in snake order (player 1, 2, 3, 4, 4, 3, 2, 1...). This tends to produce tighter, more coherent hands and lets each player focus on the area they know best — but it also reduces the serendipity that makes random deals interesting. Use it for a focused session; don't use it for a team's first session.
 
 ---
 
@@ -158,7 +160,7 @@ Many teams don't bother with scoring — the threats in the register are the poi
 - **Threat recorded with a concrete mitigation**: bonus 1 point.
 - **Threat that wins the trick** (highest card in the suit or a winning trump): bonus 1 point.
 
-Score at the end. The player with the highest total wins. Ties are broken by whoever surfaced the most Trumps-suit threats — on the grounds that non-adversarial hazards are the hardest to spot and deserve the recognition.
+Score at the end. The player with the highest total wins. Ties are broken by whoever surfaced the most Trumps-suit threats — on the grounds that structural hazards are the hardest to spot and deserve the recognition.
 
 ---
 
@@ -167,7 +169,7 @@ Score at the end. The player with the highest total wins. Ties are broken by who
 Plan for 90 minutes including setup. Breakdown:
 
 - Setup, DFD walk-through, rules refresher: 15 minutes.
-- Play: 60 minutes. With 4 players and 27 cards, that's about 7 tricks, which is a good pace for genuine discussion.
+- Play: 60 minutes. With 4 players and 30 cards, that's about 7 to 8 tricks, which is a good pace for genuine discussion.
 - Wrap-up: 15 minutes. Agree follow-ups for open mitigations, assign owners, sign off.
 
 Sessions longer than 90 minutes tire players and the quality of threat descriptions drops. If the scope genuinely needs more time, split into two sessions a week apart. Fresh eyes beat stamina every time.
@@ -178,7 +180,9 @@ Sessions longer than 90 minutes tire players and the quality of threat descripti
 
 The Trumps suit is where Elevation of Autonomy diverges most from its ancestors, and it's worth understanding why.
 
-EoP and Elevation of Privacy both work because their threat categories (STRIDE, T.R.I.M.) are well-formed: every card in the deck represents a specific adversarial action. In the AI space, some of the most important hazards are *not* adversarial. Context rot is not an attack. Decision boundary transfer is a property of the domain. Wrong abstraction is a product design failure. None of these have an attacker — and yet all of them can eat a system from the inside.
+EoP and Elevation of Privacy both work because their threat categories (STRIDE, T.R.I.M.) are well-formed: every card in the deck represents a specific adversarial action taken against a specific component. In the AI space, some of the most important hazards are not adversarial actions at all — they are structural properties of the system. Context rot is a decay in attention weight. Decision boundary transfer is a property of the domain, not the learner. Wrong abstraction is a product-design failure. Even the trumps that *do* involve an attacker — Geometric Attack and the Adversarial Subspace — are problems the model cannot solve for itself; the defence has to live outside it.
+
+That is what unites the suit: every card in it is a threat the model cannot be trained, prompted, or filtered out of. The defence is architectural every time.
 
 The Trumps suit exists to give those hazards a seat at the table. Making them trumps — playable against any non-trump card — is a deliberate ergonomic choice. It says: *these are easy to miss, so we give the player a mechanical reason to surface them.* If your team repeatedly plays Trumps against the same component, that component is carrying a security guarantee the model cannot carry. Escalate to the architect.
 

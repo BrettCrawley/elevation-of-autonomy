@@ -122,7 +122,7 @@ If three consecutive tricks all target "the retrieval layer," either the retriev
 
 ### Red flag: Trumps are being hoarded
 
-Non-adversarial hazards are the hardest to spot and the most valuable to surface. If a player has three Trumps at turn 20 of 27 and hasn't played any of them, the facilitator should gently remind the table that Trumps played late are worth less to the design than Trumps played early. Consider invoking the Trump Cooldown rule in a future session.
+Structural hazards are the hardest to spot and the most valuable to surface. If a player has three Trumps at turn 22 of 30 and hasn't played any of them, the facilitator should gently remind the table that Trumps played late are worth less to the design than Trumps played early. Consider invoking the Trump Cooldown rule in a future session.
 
 ### Red flag: silence
 
@@ -163,7 +163,7 @@ The template should live in the repository alongside the code it describes, in a
 Threat modelling is a discipline, not an event. Between sessions:
 
 - **Record which cards produced good threats and which didn't.** After three to five sessions, some cards will stand out as over- or under-powered. Prune the deck accordingly and submit feedback upstream.
-- **Build custom cards for your system.** If your environment has recurring characteristics — multiple MCP servers, a particular multi-agent orchestration pattern, specific regulatory constraints — draft local cards that capture the threats that matter most to you. The deck is intentionally small (27 cards) because the AI threat surface is still being mapped; treat it as a starting point, not a finished taxonomy.
+- **Build custom cards for your system.** If your environment has recurring characteristics — multiple MCP servers, a particular multi-agent orchestration pattern, specific regulatory constraints — draft local cards that capture the threats that matter most to you. The deck is intentionally small (30 cards) because the AI threat surface is still being mapped; treat it as a starting point, not a finished taxonomy.
 - **Revisit the threat register.** Open items should have owners and target dates. If an item is still open three months later with no movement, it needs escalation or a documented accepted-risk decision.
 - **Run a retrospective after every third or fourth session.** What did the cards surface that you wouldn't have spotted otherwise? What did they miss? Feed the answers back into card selection and facilitation technique.
 
@@ -190,6 +190,14 @@ The reference examples in my writing all use DevAssist, an internal developer pr
 - Hearts suit dominates. Expect ♥Q (Inter-Agent Trust) and ♥J (Cascading Failure) to come up repeatedly.
 - Add extra time for the DFD — multi-agent systems produce complex graphs that take longer to walk.
 - Consider running two sessions: one on the agent-to-agent boundary, one on the agent-to-user boundary.
+
+### If the system uses MCP servers
+
+- The 9-rank cards in Spades, Hearts, and Diamonds were added specifically for MCP threats — make sure the team is familiar with them before the session starts.
+- ♠9 (Tool Description Injection) is the most under-recognised: tool descriptions are prompts in disguise, and most teams have never thought about who can mutate them.
+- ♥9 (Confused Deputy Across Servers) is essential reading if the client is connected to more than one MCP server. Even two servers from the same vendor count.
+- ♦9 (Server Impersonation) gets played whenever a server is consumed from a public registry. Ask: who controls the registry? Who controls the server's CI?
+- Pair these with ★2 (Invisible Dependency) — MCP server versions, transport configurations, and tool-description hashes are rarely in any SBOM.
 
 ### If the system is a high-stakes classifier (fraud, moderation, medical)
 

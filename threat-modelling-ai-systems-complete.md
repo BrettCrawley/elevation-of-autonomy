@@ -6,7 +6,7 @@
 
 ## How to use this document
 
-This is a working reference, not a white paper. It brings together the OWASP Top 10 for LLM Applications (2025), the OWASP Top 10 for Agentic Applications (ASI01 to ASI10, December 2025), the non-adversarial hazards that the OWASP lists quietly assume away (context rot, transferable decision boundaries), the privacy frameworks that regulators actually care about (LINDDUN, T.R.I.M., GDPR Article 5), and the Model Context Protocol (MCP) threat surface that has become the dominant operational risk in agentic deployments.
+This is a working reference, not a white paper. It brings together the OWASP Top 10 for LLM Applications (2025), the OWASP Top 10 for Agentic Applications (ASI01 to ASI10, December 2025), the structural hazards that the OWASP lists quietly assume away (context rot, transferable decision boundaries, adversarial subspace), the privacy frameworks that regulators actually care about (LINDDUN, T.R.I.M., GDPR Article 5), and the Model Context Protocol (MCP) threat surface that has become the dominant operational risk in agentic deployments.
 
 It is structured around the four questions from the [Threat Modeling Manifesto](https://www.threatmodelingmanifesto.org/):
 
@@ -138,7 +138,7 @@ That is the picture. Now we can reason about it.
 This is where most of the work sits. I am going to split it into four lenses because each catches different things:
 
 1. **Adversarial threats** against the model and the agent layer (OWASP LLM Top 10 and Agentic Top 10).
-2. **Non-adversarial hazards** that produce security incidents without an attacker (context rot, hallucination, decision boundary transferability).
+2. **Structural hazards** — architectural, mathematical, and product-design properties that produce security incidents regardless of whether an attacker is present (context rot, hallucination, decision boundary transferability, adversarial subspace).
 3. **Privacy threats** using LINDDUN, T.R.I.M. and GDPR Article 5.
 4. **MCP-specific threats** because MCP is the operational centre of agentic risk right now.
 
@@ -467,7 +467,7 @@ I will use a card-entry format similar to the one I used in *Threat Modeling Gam
 
 **Example in DevAssist.** An engineer spun up a personal instance of DevAssist with broader permissions to experiment, and never turned it off. It is now running on a forgotten VM with credentials that have not been rotated. Nobody has inventoried it. It looks legitimate in every individual action.
 
-### 2.2 Non-adversarial hazards
+### 2.2 Structural hazards
 
 The OWASP lists are built around the assumption that there is an attacker. Some of the most important security failures in LLM systems happen without one. You still need to threat model them.
 
@@ -483,7 +483,7 @@ The OWASP lists are built around the assumption that there is an attacker. Some 
 
 #### 2.2.2 Hallucination as an independent failure mode
 
-Covered as LLM09 above from the adversarial angle, but it deserves a non-adversarial entry because most hallucinations are not triggered by anyone. The privacy dimension is covered separately in Section 2.3.
+Covered as LLM09 above from the adversarial angle, but it deserves a structural entry because most hallucinations are not triggered by anyone — they are a property of how the model generates output. The privacy dimension is covered separately in Section 2.3.
 
 #### 2.2.3 Transferable decision boundaries (the Cox / Tramèr result)
 
@@ -800,7 +800,7 @@ The Manifesto offers values and principles rather than a checklist; the closest 
 **Question 2 evidence: What can go wrong.**
 
 - Each threat is traceable to a component, a trust boundary, or a flow on the DFD.
-- Adversarial, non-adversarial, and privacy lenses have all been applied.
+- Adversarial, structural, and privacy lenses have all been applied.
 - For each threat, a plain-English example specific to the system (not a generic "an attacker could..." sentence).
 - The team can name threats that were *considered and rejected* as well as ones that were accepted as risks. If you only have "confirmed threats", you have not actually walked the surface.
 - MCP and any agentic components have been walked separately from the base LLM threats.
@@ -875,7 +875,7 @@ Walking through this document, you should now be able to:
 
 - Draw the DFD and name the trust boundaries for a typical LLM, RAG, or agentic system.
 - Walk the OWASP LLM Top 10 and the Agentic Top 10 against that DFD, producing system-specific threat examples rather than generic ones.
-- Recognise the non-adversarial hazards the OWASP lists do not cover: context rot as guardrail decay, and transferable decision boundaries as the reason runtime model robustness is not the leverage point.
+- Recognise the structural hazards the OWASP lists do not cover: context rot as guardrail decay, and transferable decision boundaries as the reason runtime model robustness is not the leverage point.
 - Apply LINDDUN, T.R.I.M., and GDPR Article 5 as complementary privacy lenses, and explain why hallucinations are a privacy event, not just a quality event.
 - Threat model an MCP deployment as something with its own trust boundaries, supply chain, credential scope, and cross-server data flow concerns.
 - Produce a mitigation list that is structural first and runtime second, with explicit traceability to threats.
