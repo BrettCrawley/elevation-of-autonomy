@@ -58,10 +58,10 @@ The design brief I set myself: cards abstract enough that they don't age with th
 Twenty-seven cards in five suits. Four suits of five cards mirror EoP's structure, plus a trumps suit for non-adversarial hazards.
 
 - **♠ Spades — Adversarial Threats.** Direct attacks on the model and agent.
-- **Hearts — Autonomy Threats.** Risks introduced by giving the system the ability to act.
-- **Diamonds — Data Threats.** Risks to and through the data the system handles.
-- **Clubs — Privacy Threats.** From T.R.I.M. and LINDDUN, framed for the AI era.
-- **Trumps — Non-Adversarial Hazards.** Failures without an attacker.
+- **♥ Hearts — Autonomy Threats.** Risks introduced by giving the system the ability to act.
+- **♦ Diamonds — Data Threats.** Risks to and through the data the system handles.
+- **♣ Clubs — Privacy Threats.** From T.R.I.M. and LINDDUN, framed for the AI era.
+- **★ Trumps — Non-Adversarial Hazards.** Failures without an attacker.
 
 Each card follows the format from my book: card name, card description quote, example threat, reference mapping (OWASP LLM, ASI, LINDDUN, T.R.I.M., CAPEC where applicable), and suggested mitigations.
 
