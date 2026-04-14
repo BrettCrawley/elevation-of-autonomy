@@ -381,10 +381,14 @@ That is the whole kit. Is it enough? For most teams, yes. For the hardest system
 
 ## Links
 
-- [Threat Modelling AI, LLM and Agentic Systems — the reference document](#)
-- [The Facilitator's Runbook](#)
-- [The Post-Session Template](#)
-- [Elevation of Autonomy — print-and-play card list](#)
+- [Threat Modelling AI, LLM and Agentic Systems — the reference document](threat-modelling-ai-llm-agentic.md)
+- [The Facilitator's Runbook](ai-threat-modelling-runbook.md)
+- [The Post-Session Template](ai-threat-model-template.md)
+- [Elevation of Autonomy — print-and-play card list](elevation-of-autonomy-print-and-play.md)
+- [Working example](threat-modelling-ai-systems-complete.md)
+- [Rules](elevation-of-autonomy-rules.md)
+- [Companion Guide](elevation-of-autonomy-companion-guide.md)
+- [The Cards](elevation-of-autonomy-cards.pdf)
 
 ## Acknowledgements and research attribution
 
