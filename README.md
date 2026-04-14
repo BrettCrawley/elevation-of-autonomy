@@ -46,7 +46,7 @@ What remains is structural. Deterministic enforcement outside the model. Authori
 
 **The Elevation of Autonomy card deck**, introduced here for the first time, gives teams a gamified way to walk the AI-specific threat surface in the same way EoP gamified STRIDE.
 
-I'll link the three documents at the end. The cards and supporting examples are in this post.
+I'll link the documents at the end. The cards and supporting examples are in this post.
 
 ## Introducing Elevation of Autonomy
 
@@ -424,7 +424,7 @@ This work synthesises research, frameworks, and practitioner wisdom from a wide 
 
 ### Special acknowledgement — Disesdi Shoshana Cox
 
-One contributor deserves more than a line in a list. Disesdi Shoshana Cox (also published as Disesdi Susanna Cox) sits across both sides of the research/practitioner split in this document. Her peer-reviewed work — particularly Cox and Bunzel (2025) on quantifying black-box transferability, and the US patent with Esra (2024) on federated model security architecture — is the empirical and architectural backbone for the "design-time over runtime" framing that runs through these documents. Her practitioner writing at *Angles of Attack* translates that research into language that engineers and leaders can act on, and her "AI red teaming has a subspace problem" (November 2025) is the piece that pushed the adversarial subspace problem from academic footnote into the operational threat model it deserves to be. The reframing of threat modelling as the primary leverage point, rather than runtime red teaming, is substantially hers. This document is better for her work, and for the conversations that led me down the rabbit hole of decision boundaries in the first place. Thank you.
+One contributor deserves more than a line in a list. Disesdi Shoshana Cox (also published as Disesdi Susanna Cox) sits across both sides of the research/practitioner split in this document. Her peer-reviewed work, particularly Cox and Bunzel (2025) on quantifying black-box transferability, and the US patent with Esra (2024) on federated model security architecture, is the empirical and architectural backbone for the "design-time over runtime" framing that runs through these documents. Her practitioner writing at *Angles of Attack* translates that research into language that engineers and leaders can act on, and her "AI red teaming has a subspace problem" (November 2025) is the piece that pushed the adversarial subspace problem from academic footnote into the operational threat model it deserves to be. The reframing of threat modelling as the primary leverage point, rather than runtime red teaming, is substantially hers. This document is better for her work, and for the conversations that led me down the rabbit hole of decision boundaries in the first place. Thank you.
 
 ### Regulatory context
 
