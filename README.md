@@ -38,7 +38,7 @@ What remains is structural. Deterministic enforcement outside the model. Authori
 
 ## The four pieces
 
-**The reference document** walks the OWASP LLM Top 10 (2025) and the new OWASP Agentic Top 10 (ASI01 to ASI10, December 2025) against a realistic internal developer productivity agent I call DevAssist. It adds the structural hazards the OWASP lists miss — context rot from Chroma's 2025 research, and transferable decision boundaries from the Tramèr et al. work popularised by Shoshana Cox — and it walks privacy through LINDDUN, T.R.I.M. (the F-Secure card categories: Transfer, Retention/Removal, Inference, Minimisation), and GDPR Article 5. Structured around the Threat Modeling Manifesto's four questions.
+**The reference document** walks the OWASP LLM Top 10 (2025) and the new OWASP Agentic Top 10 (ASI01 to ASI10, December 2025) against a realistic internal developer productivity agent I call DevAssist. It adds the structural hazards the OWASP lists miss — adversarial subspace and transferable decision boundaries from the Tramèr et al. and Cox & Bunzel work, and context rot from Chroma's 2025 research — and the MCP threat surface that has become the dominant operational risk in agentic deployments. It walks privacy through LINDDUN, T.R.I.M. (the F-Secure card categories: Transfer, Retention/Removal, Inference, Minimisation), and GDPR Article 5. Structured around the Threat Modeling Manifesto's four questions.
 
 **The facilitator's runbook** turns all of that into a session you can actually run, with time boxes, verbatim prompts, red flags to watch for, and a "five questions you must ask every session" quick reference for when the full treatment is overkill.
 
