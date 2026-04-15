@@ -1,6 +1,8 @@
+![Elevation of Autonomy](elevation-of-autonomy-cover.png)
+
 # Threat Modelling AI Systems: A Complete Playbook for Practitioners
 
-*The Blast Radius — Edition [N]*
+*The Blast Radius — Edition [4]*
 
 Over the past few weeks I've been building out a practical toolkit for threat modelling AI, LLM and agentic systems. The current state of advice in this space ranges from the abstract (OWASP lists) to the theatrical ("AI red teaming" that tests the wrong thing). Neither is much use to an engineer sitting in a design review on Tuesday morning trying to work out whether their new feature should ship.
 
