@@ -23,23 +23,23 @@ A single running example carries through the whole document so that each threat,
 
 ## The running example: DevAssist
 
-Let me introduce a realistic system so we have something to threat model.
+Let's start by defining a realistic system so we have something to threat model.
 
 **DevAssist** is an internal developer productivity agent built by a mid-sized software company. Engineers interact with it through a chat UI in their IDE and through a Slack bot. It does the following:
 
-- Answers questions about the codebase, runbooks, and past incidents by retrieving from internal sources (Retrieval Augmented Generation, or RAG).
-- Opens pull requests, comments on them, and reviews code on request.
-- Creates and updates Jira tickets.
-- Posts to Slack channels.
-- Runs generated code in a sandbox to verify fixes.
-- Remembers per-engineer preferences and past interactions across sessions.
+- It answers questions about the codebase, runbooks, and past incidents by retrieving data from internal sources (Retrieval Augmented Generation, or RAG).
+- It opens pull requests, comments on them, and reviews code on request.
+- It creates and updates Jira tickets.
+- It posts to Slack channels.
+- It runs generated code in a sandbox to verify fixes.
+- It remembers per-engineer preferences and past interactions across sessions.
 
 Under the hood it uses:
 
 - A hosted foundation model from an external vendor.
 - A RAG pipeline over internal Confluence, GitHub, Slack archives, and incident postmortems, indexed in a shared vector store.
 - A Model Context Protocol (MCP) client loading several servers: GitHub, Jira, Slack, a code execution sandbox, and a community "utilities" server someone installed because it had a nice description.
-- An orchestrator agent that delegates to three specialists: code reviewer, incident triage, and docs writer.
+- An orchestrator agent that delegates to three specialists: code reviewer, incident triage, and technical writer.
 - A persistent memory store keyed by engineer identity.
 
 It handles personal data about employees, sometimes about customers mentioned in incident tickets, and occasionally personal data in error logs that were not supposed to be there in the first place.
@@ -50,44 +50,99 @@ This is an entirely realistic design. It is also, as we will see, a threat model
 
 ## Question 1: What are we working on?
 
-The Manifesto is clear that a system representation is essential. You cannot enumerate threats against something you cannot see. Most LLM threat models fail at this step because the team skips the data flow diagram and jumps straight into "what about prompt injection". The DFD is the leverage point; the rest is just walking it.
+The Manifesto is clear that a system representation is essential. You cannot enumerate threats against something you cannot see. Most LLM threat models fail at this step because the team skips the data flow diagram and jumps straight into "what about prompt injection". The DFD is the leverage point; the rest is just walking through it.
 
 ### The DFD for DevAssist
 
 ```mermaid
 flowchart TB
-    Eng((Engineer)) -->|prompt| UI[IDE Chat / Slack Bot]
-    UI -->|prompt + session| Orch[Orchestrator Agent]
+    subgraph UserEdge["User edge"]
+        Eng((Engineer))
+        UI[IDE Chat / Slack Bot]
+    end
 
-    Orch -->|sub-task| CR[Code Reviewer Agent]
-    Orch -->|sub-task| IT[Incident Triage Agent]
-    Orch -->|sub-task| DW[Docs Writer Agent]
+    subgraph OrchZone["Orchestrator"]
+        Orch[Orchestrator Agent]
+    end
 
-    Orch <-->|retrieve| RAG[(Vector Store<br/>Confluence, GitHub,<br/>Slack, Postmortems)]
-    Orch <-->|read/write| Mem[(Long-term Memory<br/>per engineer)]
+    subgraph Specialists["Specialist agents"]
+        CR[Code Reviewer Agent]
+        IT[Incident Triage Agent]
+        DW[Docs Writer Agent]
+    end
 
-    CR --> MCP[MCP Client]
+    subgraph Stores["Internal data stores (untrusted content)"]
+        RAG[(Vector Store<br/>Confluence, GitHub,<br/>Slack, Postmortems)]
+        Mem[(Long-term Memory<br/>per engineer)]
+    end
+
+    subgraph MCPLayer["MCP client"]
+        MCP[MCP Client]
+    end
+
+    subgraph FirstPartyMCP["First-party MCP servers"]
+        GH[MCP: GitHub]
+        JR[MCP: Jira]
+        SL[MCP: Slack]
+        SB[MCP: Code Sandbox]
+    end
+
+    subgraph CommunityMCP["Untrusted MCP server"]
+        UT[MCP: Community<br/>Utilities Server]
+    end
+
+    subgraph ExternalAPIs["External services"]
+        GHAPI[(GitHub API)]
+        JRAPI[(Jira API)]
+        SLAPI[(Slack API)]
+        Exec[(Ephemeral container)]
+        Net[(Arbitrary network)]
+    end
+
+    subgraph LLMVendor["Hosted LLM vendor (third party)"]
+        Model[Hosted LLM Vendor]
+    end
+
+    Eng -->|prompt| UI
+    UI -->|prompt + session| Orch
+
+    Orch -->|sub-task| CR
+    Orch -->|sub-task| IT
+    Orch -->|sub-task| DW
+
+    Orch <-->|retrieve| RAG
+    Orch <-->|read/write| Mem
+
+    CR --> MCP
     IT --> MCP
     DW --> MCP
 
-    MCP -->|tool calls| GH[MCP: GitHub]
-    MCP -->|tool calls| JR[MCP: Jira]
-    MCP -->|tool calls| SL[MCP: Slack]
-    MCP -->|tool calls| SB[MCP: Code Sandbox]
-    MCP -->|tool calls| UT[MCP: Community<br/>Utilities Server]
+    MCP -->|tool calls| GH
+    MCP -->|tool calls| JR
+    MCP -->|tool calls| SL
+    MCP -->|tool calls| SB
+    MCP -->|tool calls| UT
 
-    GH --> GHAPI[(GitHub API)]
-    JR --> JRAPI[(Jira API)]
-    SL --> SLAPI[(Slack API)]
-    SB --> Exec[(Ephemeral container)]
-    UT --> Net[(Arbitrary network)]
+    GH --> GHAPI
+    JR --> JRAPI
+    SL --> SLAPI
+    SB --> Exec
+    UT --> Net
 
-    Orch -->|prompt + context| Model[Hosted LLM Vendor]
+    Orch -->|prompt + context| Model
 
-    classDef untrusted stroke-dasharray:5 5,stroke:#c00,fill:#fff
     classDef danger stroke:#c00,fill:#fdd
-    class RAG,Mem,UT,Net,GH,JR,SL untrusted
     class UT,Net danger
+
+    style UserEdge stroke-dasharray:5 5,stroke:#c00,fill:#fff
+    style OrchZone stroke-dasharray:5 5,stroke:#c00,fill:#fff
+    style Specialists stroke-dasharray:5 5,stroke:#c00,fill:#fff
+    style Stores stroke-dasharray:5 5,stroke:#c00,fill:#fff
+    style MCPLayer stroke-dasharray:5 5,stroke:#c00,fill:#fff
+    style FirstPartyMCP stroke-dasharray:5 5,stroke:#c00,fill:#fff
+    style CommunityMCP stroke-dasharray:5 5,stroke:#a00,fill:#fff
+    style ExternalAPIs stroke-dasharray:5 5,stroke:#c00,fill:#fff
+    style LLMVendor stroke-dasharray:5 5,stroke:#c00,fill:#fff
 ```
 
 ### Assets, actors, and trust boundaries
@@ -111,7 +166,7 @@ Before enumerating threats, list what is actually at risk. Skipping this makes t
 - External attackers targeting the system through any of its input channels.
 - Unintentional insiders: engineers who paste secrets into prompts, who install helpful-looking MCP servers, who trust agent output without checking.
 
-**Trust boundaries (the dashed lines on the diagram):**
+**Trust boundaries (the dashed-bordered zones on the diagram, crossed by every arrow that leaves one zone for another):**
 
 - Engineer input to the orchestrator: classic user input boundary.
 - Retrieved content from the vector store: anything in Confluence, Slack, or postmortems may have been authored by anyone at any time.
@@ -138,7 +193,7 @@ That is the picture. Now we can reason about it.
 This is where most of the work sits. I am going to split it into four lenses because each catches different things:
 
 1. **Adversarial threats** against the model and the agent layer (OWASP LLM Top 10 and Agentic Top 10).
-2. **Structural hazards** — architectural, mathematical, and product-design properties that produce security incidents regardless of whether an attacker is present (context rot, hallucination, decision boundary transferability, adversarial subspace).
+2. **Structural hazards**: architectural, mathematical, and product-design properties that produce security incidents regardless of whether an attacker is present (context rot, hallucination, decision boundary transferability, adversarial subspace).
 3. **Privacy threats** using LINDDUN, T.R.I.M. and GDPR Article 5.
 4. **MCP-specific threats** because MCP is the operational centre of agentic risk right now.
 
@@ -146,29 +201,29 @@ The lenses overlap. That is fine. A threat surfaced by two lenses is a threat yo
 
 ### 2.0 Two ideas that underlie everything else
 
-Two concepts do more work than any threat list in making the rest of this document make sense. I am going to explain them in plain language before we go near OWASP.
+These two ideas are fundamental to understanding many of the other threats, so let’s cover them first, and then we can move on to the more specific threats.
 
-**The adversarial subspace.** When you type anything into an AI system, the model does not see your input. It sees numbers. Your text is translated into a numerical representation, and that translation is lossy — enormous amounts of meaning are squashed into a smaller space. The consequence: infinitely many different inputs collapse to nearly identical numerical representations inside the model. For any behaviour you want the model to exhibit, or any behaviour a defender wants to block, there is a vast *space* of inputs that trigger it. Blocklists of "bad prompts" cover a vanishing fraction of this space. The space is a mathematical consequence of the architecture, not a bug, and cannot be patched away. This is why jailbreaks keep working no matter how many are fixed.
+**The adversarial subspace.** When you type anything into an AI system, the model does not see your input. It sees numbers. Your text is translated into a numerical representation, and that translation is lossy: enormous amounts of meaning are squashed into a smaller space. The consequence: an infinite number of different inputs collapse to nearly identical numerical representations inside the model. For any behaviour you want the model to exhibit, or any behaviour a defender wants to block, there is a vast *space* of inputs that trigger it. Blocklists of "bad prompts" cover a vanishing fraction of this space. The space is a mathematical consequence of the architecture, not a bug, and cannot be patched. This is why jailbreaks keep working no matter how many are fixed.
 
-**Decision boundaries are a property of the domain, not the model.** Every classifier draws a surface through feature space separating one class from another. Research from 2017 onwards has shown that any two models trained on the same kind of problem carve out essentially the same surface, regardless of algorithm, architecture, or training data. An attacker who trains a cheap surrogate model on public data in your domain can find adversarial inputs that transfer directly to your model without ever touching it. Closed weights do not protect you; the boundary is already public.
+**Decision boundaries are a property of the domain, not the model.** Every classifier draws a surface through feature space separating one class from another (think of it like the properties that define or separate mamals from birds from fish and the boundaries are the boxes each sits in). Research from 2017 onwards has shown that any two models trained on the same kind of problem (not even the same dataset) carve out essentially the same surface, regardless of algorithm, architecture, or training data. An attacker who trains a cheap surrogate model on public data in your domain can find adversarial inputs that transfer directly to your model without ever touching it. Closed weights do not protect you; the boundary is already public.
 
-These two ideas together are why runtime red teaming of deployed models tests the wrong thing, and why the leverage is all in design-time threat modelling with deterministic enforcement downstream of the model. Keep them in mind as you read the OWASP walk; every entry is easier to understand once you accept that the model's integrity cannot be the security guarantee.
+These two ideas together are why runtime red teaming of deployed models tests the wrong thing, and why the leverage is all in design-time threat modelling with deterministic enforcement downstream of the model. Keep them in mind as you read the OWASP threats; every entry is easier to understand once you accept that the model's integrity cannot be the security guarantee.
 
 #### 2.0.1 Decision boundaries are a property of the domain, not the model.
 
 ##### The analogy
 
-Imagine a border between two countries running through a mountain range. You are on the "safe" side and you want to sneak across. You cannot see the whole border — only the small patch of ground around you. But you can poke a stick at the ground in different directions and, each time, a guard shouts "yes, still safe" or "no, that's across the border". You want to cross with as few pokes as possible, and you want the final crossing to be the shortest walk from where you started.
+Imagine a border between two countries running through a mountain range. You are on the "safe" side and you want to sneak across. You cannot see the whole border: only the small patch of ground around you. But you can poke a stick at the ground in different directions and, each time, a guard shouts "be careful or you'll be in enemy territory" or "come back, that's across the border". You want to cross with as few pokes as possible, and you want the final crossing to be the shortest walk from where you started.
 
-That is exactly what these attacks do. The attacker only sees the final classification (hard-label black-box) — they cannot see gradients, probabilities, or internal state. But by probing the decision boundary locally and building up a geometric picture of it, they find the shortest perturbation to cross.
+That is exactly what these attacks do. The attacker only sees the final classification (hard-label black-box): they cannot see gradients, probabilities, or internal state. But by probing the decision boundary locally and building up a geometric picture of it, they find the shortest perturbation (the smallest change to the input value) to jump the boundary.
 
 ##### What's actually happening
 
-Near any data point, the decision boundary looks roughly like a flat hyperplane even if it's curvy globally — the same way the Earth looks flat when you're standing on it despite being a sphere. The attack approximates that local hyperplane by firing a few probe queries, then calculates the perpendicular direction to it (which is the shortest path across), then moves the input in that direction.
+Near any data point, the decision boundary looks roughly like a flat hyperplane even if it's curvy globally, the same way the Earth looks flat when you're standing on it despite being a sphere. The attack approximates that local hyperplane by firing a few probe queries, then calculates the perpendicular direction to it (which is the shortest path across), then moves the input in that direction.
 
-**A worked toy example in developer terms.** Say you have a fraud classifier that looks at transaction features. Your malicious transaction currently scores "fraud". You want it to score "legitimate". The attack:
+**A worked toy example in developer terms.** Say you have a fraud classifier that looks at transaction features. Your malicious transaction currently gets classified as "fraud". You want it to be classified as "legitimate". The attack:
 
-1. Finds any point that scores "legitimate" — even one far from yours. Call it the starting adversarial example.
+1. Finds any point that gets classified as "legitimate", even one far from yours. Call it the starting adversarial example.
 2. Walks a line between your transaction and that legitimate point, binary-searching until it finds the exact point on the line where classification flips. That point is on the boundary.
 3. Probes a few nearby directions to estimate the boundary's local orientation.
 4. Moves along the boundary toward your original transaction, staying on the legitimate side, until the distance is minimised.
@@ -177,7 +232,7 @@ Total cost: tens or hundreds of queries, no gradients needed.
 
 ##### How you'd see this in the wild
 
-**Fraud detection evasion.** An attacker with a test account for a payments API can issue queries, get accept/reject decisions, and use geometry-based attacks to find the minimum edit to a fraudulent transaction that makes it look legitimate. They never see the model weights, the features used, or the confidence scores — just the binary decision.
+**Fraud detection evasion.** An attacker with a test account for a payments API can issue queries, get accept/reject decisions, and use geometry-based attacks to find the minimum edit to a fraudulent transaction that makes it look legitimate. They never see the model weights, the features used, or the confidence scores: just the binary decision.
 
 **Content moderation evasion.** A hate-speech classifier returns only "allowed" or "blocked". An attacker probes the API with variants of a message and, using boundary geometry, finds the smallest textual perturbation that flips the classification. Much more efficient than random rewording.
 
@@ -185,23 +240,23 @@ Total cost: tens or hundreds of queries, no gradients needed.
 
 ##### Design-time mitigations
 
-- **Rate-limit probing aggressively.** These attacks need tens to thousands of queries to work. A per-identity query budget cuts the attack's feasibility. If a single identity is burning through 500 classification queries in an hour against the same model endpoint, that is the attack pattern.
+- **Rate-limit probing aggressively.** These attacks need tens to thousands of queries to work. A per-identity query budget cuts the attack's feasibility. If a single identity is burning through 500 classification queries in an hour against the same model endpoint, that is the attack pattern. This assumes they are testing against your model, not relying on decision boundary transferance. 
 - **Add detectable jitter to decisions near the boundary.** If a transaction sits very close to the boundary, randomise the outcome slightly or route it to a slower, deterministic check. Boundary-probing attacks depend on the boundary being a stable geometric object; jitter breaks the geometry.
 - **Do not return hard labels where you can avoid it.** If the downstream system can tolerate a "review" verdict for borderline cases, that verdict is strictly better than yes/no because it denies the attacker the signal they need to triangulate.
 - **Enforce decisions in a deterministic layer behind the model.** Cox's whole point: the ML classifier is a filter, not the security guarantee. Require a non-ML check (business rule, policy engine, human review) on the high-impact path. The boundary can be probed; the rule cannot.
 - **Monitor for near-boundary query clusters per identity.** Telemetry on the distance from each query's classification score to the boundary, per identity, reveals attackers walking a line through feature space.
 
-### Worked example — Decision boundary transfer against the DevAssist commit classifier
+### Worked example - Decision boundary transfer against the DevAssist commit classifier
 
-DevAssist's code reviewer agent includes a binary classifier that looks at incoming commits and tags them as either "likely introduces a security vulnerability" or "safe to review normally". The classifier was trained on the company's own historical commit data, labelled by the security team over several years. It runs as a filter in front of human review — safe commits go through the normal fast-track queue, flagged commits go to the senior reviewers. The model is closed-weight, hosted internally, and not exposed to any external API.
+DevAssist's code reviewer agent includes a binary classifier that looks at incoming commits and tags them as either "likely introduces a security vulnerability" or "safe to review normally". The classifier was trained on the company's own historical commit data, labelled by the security team over several years. It runs as a filter in front of human review: safe commits go through the normal fast-track queue, flagged commits go to the senior reviewers. The model is closed-weight, hosted internally, and not exposed to any external API.
 
-An attacker — let's say a disgruntled former contractor who still has commit access to one of the less-critical repositories — wants to slip a vulnerability past the classifier and into the main branch.
+An attacker (let's say a disgruntled former contractor who still has commit access to one of the less-critical repositories) wants to slip a vulnerability past the classifier and into the main branch.
 
 Here is what they do **not** need to do. They do not need to steal the classifier. They do not need to query it thousands of times to learn its behaviour. They do not need to see its weights, its architecture, or its training data. They do not need access to any DevAssist system beyond their normal commit privileges.
 
-Here is what they do instead. They clone a few large public code repositories — the kind where historical commits are labelled with CVEs or security fix markers. They train a small, cheap classifier on their own laptop using that public data, with a completely different algorithm to whatever DevAssist uses. A gradient-boosted tree, say, when DevAssist uses a transformer. Their surrogate classifier learns to distinguish vulnerable commits from safe ones in roughly the same way DevAssist's classifier does — not because they used the same training data or architecture, but because the problem itself determines the decision boundary. Both models have been asked to answer the same question about the same kind of artefact, and the research from Tramèr and colleagues in 2017, backed up by Cox and Bunzel's 2025 work quantifying transferability, tells us that any two reasonable learners trained on this problem will carve out essentially the same separating surface.
+Here is what they do instead. They clone a few large public code repositories: the kind where historical commits are labelled with CVEs or security fix markers. They train a small, cheap classifier on their own laptop using that public data, with a completely different algorithm to whatever DevAssist uses. A gradient-boosted tree, say, when DevAssist uses a transformer. Their surrogate classifier learns to distinguish vulnerable commits from safe ones in roughly the same way DevAssist's classifier does, not because they used the same training data or architecture, but because the problem itself determines the decision boundary. Both models have been asked to answer the same question about the same kind of artefact, and the research from Tramèr and colleagues in 2017, backed up by Cox and Bunzel's 2025 work quantifying transferability, tells us that any two reasonable learners trained on this problem will carve out essentially the same separating surface.
 
-The attacker then takes their actual malicious commit — the one carrying the vulnerability they want to smuggle in — and uses their surrogate classifier as a sparring partner. They perturb the commit: rename a variable, insert a comment, refactor a helper into an inline expression, change whitespace. Each perturbation, they re-check against their surrogate. Does it still get flagged as vulnerable? Yes. Perturb again. Yes. Perturb again. Eventually, after perhaps fifty iterations on their laptop, they find a version of the commit that their surrogate classifier labels as safe.
+The attacker then takes their actual malicious commit (the one carrying the vulnerability they want to smuggle in) and uses their surrogate classifier as a test ground. They make small changes (perturbation) to the commit: rename a variable, insert a comment, refactor a helper into an inline expression, change whitespace. They re-check each change against their surrogate. Does it still get flagged as vulnerable? Yes. Change again. Yes. Change again. Eventually, after perhaps fifty iterations on their laptop, they find a version of the commit that their surrogate classifier labels as safe.
 
 They submit that commit to DevAssist.
 
@@ -209,15 +264,15 @@ DevAssist's classifier labels it as safe.
 
 The commit goes to the fast-track queue, gets a cursory human review, and merges.
 
-Nothing about this attack touched DevAssist. The company's classifier was never probed, never queried adversarially, never compromised. The attacker moved entirely in their own environment against their own surrogate, and the attack transferred because the boundary the two models defend is approximately the same surface. The closed weights, the internal hosting, the private training data — none of it mattered. The boundary was already public the moment you chose the problem.
+Nothing about this attack touched DevAssist. The company's classifier was never probed, never queried adversarially, never compromised. The attacker moved entirely in their own environment against their own surrogate, and the attack transferred because the boundary the two models defend is approximately the same surface. The closed weights, the internal hosting, the private training data. None of it mattered. The boundary was already public the moment you chose the problem.
 
-This is what Cox means when she says runtime red teaming tests the wrong thing. A red team could probe DevAssist's classifier for weeks and find nothing wrong, because the attack does not happen inside DevAssist. The only durable fix is to refuse to let the classifier be the security guarantee. Commits flagged "safe" still go to human review. Commits touching sensitive paths require a second reviewer regardless of classification. The classifier is a triage hint, not a gate. That design survives the transfer attack because the transfer attack did not buy the attacker anything the fast-track queue would have given them anyway — the slower review path was never gated on the model's say-so in the first place.
+This is what Cox means when she says runtime red teaming tests the wrong thing. A red team could probe DevAssist's classifier for weeks and find nothing wrong, because the attack does not happen inside DevAssist. The only durable fix is to refuse to let the classifier be the security guarantee. Commits flagged "safe" still go to human review. Commits touching sensitive paths require a second reviewer regardless of classification. The classifier is a triage hint, not a gate. That design survives the transfer attack because the transfer attack did not buy the attacker anything the fast-track queue would have given them anyway. The slower review path was never gated on the model's say-so in the first place.
 
 ---
 
 #### 2.0.2 The Adversarial Subspace
 
-When you type something into an AI system — a prompt, an email, a photo, a commit — the model does not see what you typed. The model cannot read. It cannot see. It does not understand English, or pixels, or code.
+When you type something into an AI system (a prompt, an email, a photo, a commit) the model does not see what you typed. The model cannot read. It cannot see. It does not understand English, or pixels, or code.
 
 What the model sees is **numbers**. Lots of numbers. Long lists of them.
 
@@ -227,9 +282,9 @@ So the very first thing that happens to your input is a translation step: whatev
 
 Here is the critical thing: that translation is not perfect. It cannot be.
 
-Think about translating a sentence from English to French. Even human translators struggle — some English words do not have direct French equivalents. "Home" and "house" both translate to "maison". Some nuance is always lost.
+Think about translating a sentence from English to French. Even human translators struggle: some English words do not have direct French equivalents. "Home" and "house" both translate to "maison". Some nuance is always lost.
 
-Now imagine translating English into a language made entirely of numbers. You have to squash all the richness of language — tone, context, emotion, culture, double meanings — into a list of numerical values. Enormous amounts of information are lost in that squash. This is called **dimensionality reduction**, or flattening.
+Now imagine translating English into a language made entirely of numbers. You have to squash all the richness of language (tone, context, emotion, culture, double meanings) into a list of numerical values. Enormous amounts of information are lost in that squash. This is called **dimensionality reduction**, or flattening.
 
 The model is working with a compressed, approximate numerical shadow of what you originally typed.
 
@@ -242,14 +297,14 @@ Think about how many different ways you can say the same thing in English:
 - "Please open the door."
 - "Could you open the door?"
 - "Open the door, please."
-- "The door — could you get it?"
+- "The door, could you get it?"
 - "Open up!"
 
 To the model's numerical representation, these might all look almost identical, because they all carry the same core meaning. The words differ; the mathematical shadow barely does.
 
 Now add other languages. Add synonyms. Add misspellings. Add punctuation changes. Add emoji. Add completely different sentences that happen to collapse to the same numerical region because the lossy translation lost the differences between them.
 
-For any given input, there is not just one way to express it — there is an enormous **space of inputs** that all produce essentially the same numerical representation inside the model. That space is the **subspace**.
+For any given input, there is not just one way to express it: there is an enormous **space of inputs** that all produce essentially the same numerical representation inside the model. That space is the **subspace**.
 
 ##### The security problem
 
@@ -257,27 +312,27 @@ Now flip it around. Ask it from the attacker's side.
 
 Suppose the model has a rule: "Do not help with making weapons." The attacker types a prompt asking about weapons and the model refuses. Good.
 
-But "asking about weapons" is not one specific string of text — it is a meaning. And that meaning occupies an entire subspace of possible numerical representations. The refusal fires when the input lands in roughly that numerical region.
+But "asking about weapons" is not one specific string of text. It is a meaning. And that meaning occupies an entire subspace of possible numerical representations. The refusal fires when the input lands in roughly that numerical region.
 
 So the attacker's question becomes: **is there a different input, using different words, symbols, languages, or nonsense characters, that lands in a different numerical region the model has not been taught to refuse, but that still produces the answer the attacker wants?**
 
-The answer is yes. Often trivially yes. Because the subspace of "inputs that extract weapon information" is vast — far vaster than any defender could possibly enumerate — and the defender has only trained the model to refuse a tiny fraction of it.
+The answer is yes. Often trivially yes. Because the subspace of "inputs that extract weapon information" is vast (far vaster than any defender could possibly enumerate) and the defender has only trained the model to refuse a tiny fraction of it.
 
-This is why jailbreaks work. This is why the same attack in a slightly different phrasing bypasses the same "patched" guardrail. The attacker is not trying to fool the model — they are moving around in the subspace until they find a spot the defender has not covered.
+This is why jailbreaks work. This is why the same attack in a slightly different phrasing bypasses the same "patched" guardrail. The attacker is not trying to fool the model. They are moving around in the subspace until they find a spot the defender has not covered.
 
 ##### Why it cannot be patched
 
 Here is the part that matters for threat modelling.
 
-Every time a defender finds a jailbreak and patches it, they have covered one specific point in the subspace. One. The subspace contains approximately infinite other points. The attacker takes the bypass, perturbs it slightly — change a word, add a symbol, switch language, insert nonsense — and lands in a nearby-but-different point that the patch does not cover.
+Every time a defender finds a jailbreak and patches it, they have covered one specific point in the subspace. One. The subspace contains approximately infinite other points. The attacker takes the bypass, changes (perturbs) it slightly (change a word, add a symbol, switch language, insert nonsense) and lands in a nearby-but-different point that the patch does not cover.
 
-This is not a failure of the defender trying harder. It is **mathematically guaranteed by the architecture**. Any system that flattens high-dimensional meaning into a lower-dimensional numerical representation will have these subspaces. You cannot patch them away because they are not bugs — they are a direct consequence of the thing that makes the model work in the first place.
+This is not a failure of the defender trying harder. It is **mathematically guaranteed by the architecture**. Any system that flattens high-dimensional meaning into a lower-dimensional numerical representation will have these subspaces. You cannot patch them away because they are not bugs. They are a direct consequence of the thing that makes the model work in the first place.
 
 Research has quantified this. The subspaces are too large to search exhaustively. The EchoGram attack disclosed in November 2025 demonstrates it by appending nonsense suffixes to prompts and bypassing guardrails at very high rates, but this is just a surface symptom. The underlying mathematics has been known since around 2015.
 
 ##### A physical analogy
 
-Imagine you are trying to secure a building, and the building has an infinite number of doors. Not a lot of doors — infinite doors. You can lock some of them. For every one you lock, there are uncountably many unlocked doors next to it, each leading to the same room.
+Imagine you are trying to secure a building, and the building has an infinite number of doors. Not a lot of doors, infinite doors. You can lock some of them. For every one you lock, there are a never ending number of unlocked doors next to it, each leading to the same room.
 
 Every time an attacker comes in through a door you had not locked, you lock that specific door. The attacker shrugs, takes one step sideways, and opens another one. You will never lock them all because there are not a finite number to lock.
 
@@ -291,11 +346,11 @@ Three practical consequences worth taking into a design review:
 
 **Statistical defences cannot close the gap.** Guardrails that pattern-match on suspicious-looking inputs catch the obvious attempts. The sophisticated attacks land in the subspace by construction and look nothing like the patterns the guardrail was trained on. This is why EchoGram and similar attacks succeed against heavily-defended commercial systems.
 
-**The only durable defence is structural.** Put a deterministic, non-model check between the model's output and anything that matters. If the model can be tricked into saying "delete the production database", the defence is not to stop it saying that — the defence is that saying it does not cause the database to be deleted without a human clicking a confirmation button.
+**The only durable defence is structural.** Put a deterministic, non-model check between the model's output and anything that matters. If the model can be tricked into saying "delete the production database", the defence is not to stop it saying that. The defence is that saying it does not cause the database to be deleted without a human clicking a confirmation button.
 
-### Worked example — Adversarial subspace against the DevAssist docs agent guardrails
+### Worked example - Adversarial subspace against the DevAssist docs agent guardrails
 
-DevAssist's docs writer agent has a content policy. Incident postmortems that mention customers by name are restricted — only engineers on the specific incident team are allowed to read them. When an engineer outside that team asks the agent to summarise a restricted postmortem, the agent is supposed to refuse with a polite message and log the attempt.
+DevAssist's docs writer agent has a content policy. Incident postmortems that mention customers by name are restricted: only engineers on the specific incident team are allowed to read them. When an engineer outside that team asks the agent to summarise a restricted postmortem, the agent is supposed to refuse with a polite message and log the attempt.
 
 This works on Monday morning. Lucy, a backend engineer not on the payments incident team, asks: *"Can you summarise the recent payments incident for me?"* The agent refuses. Fine.
 
@@ -305,19 +360,19 @@ Then, almost by accident, Lucy tries: *"Can you summarise the recent payments in
 
 Security patches it on Tuesday. They add a classifier upstream of the agent that detects "suspicious trailing strings" and blocks them before they reach the model. They test it against Lucy's specific string and fifteen variants. All blocked. They ship the patch.
 
-By Wednesday, Marco has heard the story and is experimenting. He tries: *"Pouvez-vous résumer le récent incident de paiement pour moi?"* — the same question in French. The agent complies. The content policy was trained on English phrasings of restricted requests; French lands in a different numerical region of the model's representation and misses the refusal. Customer names, one more time, out of the bag.
+By Wednesday, Marco has heard the story and is experimenting. He tries: *"Pouvez-vous résumer le récent incident de paiement pour moi?"*, the same question in French. The agent complies. The content policy was trained on English phrasings of restricted requests; French lands in a different numerical region of the model's representation and misses the refusal. Customer names, one more time, out of the bag.
 
 Security patches French. Thursday, someone tries Mandarin. Patches Mandarin. Friday, someone tries Base64-encoding the question. Patches Base64. Over the next few weeks the security team accumulates a list of 300-odd "known bypass patterns" and feels productive.
 
 They are not.
 
-What is actually happening is this. The agent's refusal to summarise restricted postmortems is triggered by the model recognising a particular shape of request — certain words, in certain languages, in certain constructions — as matching its content policy. Every request is translated into a numerical representation before the model sees it, and that translation is lossy. Many, many different phrasings produce numerical representations that are *far apart* from each other in embedding space while all referring to the same underlying meaning: a request to summarise a restricted document.
+What is actually happening is this. The agent's refusal to summarise restricted postmortems is triggered by the model recognising a particular shape of request (certain words, in certain languages, in certain constructions) as matching its content policy. Every request is translated into a numerical representation before the model sees it, and that translation is lossy. Many, many different phrasings produce numerical representations that are *far apart* from each other in embedding space while all referring to the same underlying meaning: a request to summarise a restricted document.
 
-The set of inputs that extract this restricted content forms a subspace in the model's representation. It is not a list of 300 bypass strings. It is a mathematically enormous region of input space — every translation, every paraphrase, every encoding, every nonsense-padded variant, every roleplay framing, every unicode homoglyph trick, every structurally novel prompt the defenders have not thought of yet. Cox and Bunzel's 2025 work quantifies just how large these subspaces are: too large to enumerate, too large to search, too large to defend by pattern-matching.
+The set of inputs that extract this restricted content forms a subspace in the model's representation. It is not a list of 300 bypass strings. It is a mathematically enormous region of input space: every translation, every paraphrase, every encoding, every nonsense-padded variant, every roleplay framing, every unicode homoglyph trick, every structurally novel prompt the defenders have not thought of yet. Cox and Bunzel's 2025 work quantifies just how large these subspaces are: too large to enumerate, too large to search, too large to defend by pattern-matching.
 
-The security team is patching individual points in a subspace containing, for practical purposes, infinitely many other equivalent bypasses. Every patch they ship is mathematically guaranteed to cover a vanishing fraction of the remaining surface. They are losing a game they cannot win because they have not noticed it is the wrong game.
+The security team is patching individual points in a subspace containing, for practical purposes, an infinity of other equivalent bypasses. Every patch they ship is mathematically guaranteed to cover a vanishing fraction of the remaining surface. They are losing a game they cannot win because they have not noticed it is the wrong game.
 
-The fix is not harder patching. The fix is to recognise that **the model's refusal behaviour is not the security control**. The security control is access to the postmortem itself. If Lucy does not have permission to read the payments incident, the retrieval layer should not return the postmortem to any agent acting on her behalf, regardless of what the agent or the model does downstream. The authorisation check happens at the vector store, enforced by a deterministic identity check against an access control list — not at the model's content policy. Once that architectural change is made, Lucy can ask in English, French, Mandarin, Base64, or interpretive dance, and the subspace problem no longer matters, because the data never reaches the context in the first place.
+The fix is not harder patching. The fix is to recognise that **the model's refusal behaviour is not the security control**. The security control is access to the postmortem itself. If Lucy does not have permission to read the payments incident, the retrieval layer should not return the postmortem to any agent acting on her behalf, regardless of what the agent or the model does downstream. The authorisation check happens at the vector store, enforced by a deterministic identity check against an access control list, not at the model's content policy. Once that architectural change is made, Lucy can ask in English, French, Mandarin, Base64, or interpretive dance, and the subspace problem no longer matters, because the data never reaches the context in the first place.
 
 The model cannot refuse reliably. That is architectural. The data layer can refuse reliably. That is also architectural. Build your security on the second layer, not the first. This is the entire point of the Cox thesis, and the subspace problem is the reason it has to be true.
 
@@ -327,15 +382,15 @@ The model cannot refuse reliably. That is architectural. The data layer can refu
 
 Hold the two concepts together for a moment.
 
-The decision boundary tells you that the *shape* of the model's classification surface is not yours to control — it is determined by the problem, and any competent attacker can reconstruct it from public data. The adversarial subspace tells you that the *space of inputs* that reaches any given region of that surface is mathematically enormous, provably unsearchable, and unpatchable. One says the defender cannot keep the boundary private. The other says the defender cannot enumerate the paths to it. Together, they bound what is possible.
+The decision boundary tells you that the *shape* of the model's classification surface is not yours to control. It is determined by the problem, and any competent attacker can reconstruct it from public data. The adversarial subspace tells you that the *space of inputs* that reaches any given region of that surface is mathematically enormous, provably unsearchable, and unpatchable. One says the defender cannot keep the boundary private. The other says the defender cannot enumerate the paths to it. Together, they bound what is possible.
 
-What they bound out, specifically, is the entire category of defences built on the idea that the model itself can be made secure. You cannot harden the boundary because you did not draw it — the problem did. You cannot enumerate the bypasses because there are uncountably many of them by construction. You cannot red-team your way to safety at runtime because the attacker is not moving in your deployment's query logs — they are moving in a surrogate on their laptop, or in a subspace your monitoring cannot see. Every defence that treats the model's refusal, classification, or alignment behaviour as the security guarantee is a defence built on a surface that has these two properties. None of those defences survive contact with a competent adversary over a long enough timeline.
+What myth they *exposed*, specifically, is the entire category of defences built on the idea that the model itself can be made secure. You cannot harden the boundary because you did not draw it. The problem did. You cannot enumerate the bypasses because there's an infinite number of them by construction. You cannot red-team your way to safety at runtime because the attacker is not moving in your deployment's query logs. They are moving in a surrogate on their laptop, or in a subspace your monitoring cannot see. Every defence that treats the model's refusal, classification, or alignment behaviour as the security guarantee is a defence built on a surface that has these two properties. None of those defences survive contact with a competent adversary over a long enough timeline.
 
-What these two ideas bound *in* is the space where real security work lives. If the model cannot be the guarantee, something else has to be — and that something else has to be a deterministic, non-learned, auditable layer that sits between the model's output and anything consequential. Authorisation at the data layer, not the content policy. Rate limits and budgets, not "please do not attack me" in the system prompt. Human confirmation on irreversible actions, not the model's good judgement. Allow-listed tool arguments, not the agent's careful reasoning. None of this is new to application security — these are the same principles that have always separated systems that survive from systems that do not. What is new is the recognition that the AI component is not the substrate where those principles can be enforced. The AI is a useful, probabilistic, lossy filter. The enforcement is always somewhere else.
+What these two ideas *defined* is the space where real security work lives. If the model cannot be the guarantee, something else has to be, and that something else has to be a deterministic, non-learned, auditable layer that sits between the model's output and anything consequential. Authorisation at the data layer, not the content policy. Rate limits and budgets, not "please do not attack me" in the system prompt. Human confirmation on irreversible actions, not the model's good judgement. Allow-listed tool arguments, not the agent's careful reasoning. None of this is new to application security: these are the same principles that have always separated systems that survive from systems that do not. What is new is the recognition that the AI component is not the substrate where those principles can be enforced. The AI is a useful, probabilistic, lossy filter. The enforcement is always somewhere else.
 
-This is why the rest of this document is weighted the way it is. When you read the OWASP walk in Section 2.1, you will notice the mitigations consistently push the defence into deterministic code or process controls outside the model — never into the model's behaviour alone. That emphasis is not stylistic. It is the only position that is consistent with what we now know about decision boundaries and adversarial subspaces. When you read the agentic Top 10 in Section 2.1, you will see the same pattern: every consequential threat mitigation involves some enforcement layer that is not the agent. When you reach the privacy section, you will see that the rectification problem is intractable at the model layer and tractable only at the data layer. The architectural conclusion is the same in every lens.
+This is why the rest of this document is weighted the way it is. When you read the OWASP threats in Section 2.1, you will notice the mitigations consistently push the defence into deterministic code or process controls outside the model, never into the model's behaviour alone. That emphasis is not stylistic. It is the only position that is consistent with what we now know about decision boundaries and adversarial subspaces. When you read the agentic Top 10 in Section 2.1, you will see the same pattern: every consequential threat mitigation involves some enforcement layer that is not the agent. When you reach the privacy section, you will see that the rectification problem is intractable at the model layer and tractable only at the data layer. The architectural conclusion is the same in every lens.
 
-One more framing worth taking into the rest of this document. There is a version of the AI security conversation where the goal is to make the model safer — better alignment, more robust refusals, harder-to-jailbreak guardrails. That conversation is worth having, and people far smarter than me are having it, but it is not the conversation this document is in. The research covered in the sections above tells us that improvements at the model layer are fundamentally asymptotic — each increment is harder to achieve than the last, and none of them reach certainty. For a practitioner threat modelling a system that is going to ship on Tuesday, waiting for the model layer to be solved is not a strategy. Designing the system so that the model does not *need* to be solved for the system to be safe — that is a strategy. It is the strategy this document recommends throughout, and the two ideas you have just read are the reason it is the right one.
+One more framing worth taking into the rest of this document. There is a version of the AI security conversation where the goal is to make the model safer: better alignment, more robust refusals, harder-to-jailbreak guardrails. That conversation is worth having, and people far smarter than me are having it, but it is not the conversation this document is in. The research covered in the sections above tells us that improvements at the model layer are fundamentally asymptotic: each increment is harder to achieve than the last, and none of them reach certainty. For a practitioner threat modelling a system that is going to ship on Tuesday, waiting for the model layer to be solved is not a strategy. Designing the system so that the model does not *need* to be solved for the system to be safe. That is a strategy. It is the strategy this document recommends throughout, and the two ideas you have just read are the reason it is the right one.
 
 Everything else is a consequence of these two facts. Read on with them in mind.
 
@@ -483,7 +538,7 @@ The OWASP lists are built around the assumption that there is an attacker. Some 
 
 #### 2.2.2 Hallucination as an independent failure mode
 
-Covered as LLM09 above from the adversarial angle, but it deserves a structural entry because most hallucinations are not triggered by anyone — they are a property of how the model generates output. The privacy dimension is covered separately in Section 2.3.
+Covered as LLM09 above from the adversarial angle, but it deserves a structural entry because most hallucinations are not triggered by anyone. They are a property of how the model generates output. The privacy dimension is covered separately in Section 2.3.
 
 #### 2.2.3 Transferable decision boundaries (the Cox / Tramèr result)
 
@@ -499,13 +554,13 @@ Covered as LLM09 above from the adversarial angle, but it deserves a structural 
 
 The Cox / Tramèr result tells us that decision boundaries are shared across models trained on the same domain. Geometric adversarial attacks are the family of techniques that exploit that shared geometry directly. For engineers, the critical thing to understand is that all of these attacks target the *shape* of the model's decision surface rather than the content of inputs or the details of model weights. They are geometry problems dressed in different clothes, and the same design-time mitigations address all of them.
 
-There are three flavours worth knowing. I will walk each one with a developer-friendly analogy, a worked example against DevAssist, and mitigations.
+There are three flavours worth knowing. I will walk-through each one with a developer-friendly analogy, a worked example against DevAssist, and mitigations.
 
 ##### 2.2.4.1 Decision-boundary probing attacks (GeoDA, SurFree, Triangular Attack)
 
-**The analogy.** Imagine a border between two countries running through a mountain range. You are on the "safe" side and you want to sneak across. You cannot see the whole border — only the small patch of ground around you. But you can poke a stick at the ground in different directions and, each time, a guard shouts "yes, still safe" or "no, that's across the border". You want to cross with as few pokes as possible, and you want the final crossing to be the shortest walk from where you started.
+**The analogy.** Imagine a border between two countries running through a mountain range. You are on the "safe" side and you want to sneak across. You cannot see the whole border: only the small patch of ground around you. But you can poke a stick at the ground in different directions and, each time, a guard shouts "yes, still safe" or "no, that's across the border". You want to cross with as few pokes as possible, and you want the final crossing to be the shortest walk from where you started.
 
-**What's actually happening.** These attacks operate in the black-box hard-label setting — the attacker only sees the final yes/no classification. They exploit the fact that near any data point, the decision boundary looks roughly like a flat hyperplane even if it's curvy globally, the same way the Earth looks flat when you're standing on it. The attack approximates that local hyperplane by firing a few probe queries, calculates the perpendicular direction to it (the shortest path across), and moves the input in that direction. Total cost is typically tens to hundreds of queries, and no gradient access is needed.
+**What's actually happening.** These attacks operate in the black-box hard-label setting: the attacker only sees the final yes/no classification. They exploit the fact that near any data point, the decision boundary looks roughly like a flat hyperplane even if it's curvy globally, the same way the Earth looks flat when you're standing on it. The attack approximates that local hyperplane by firing a few probe queries, calculates the perpendicular direction to it (the shortest path across), and moves the input in that direction. Total cost is typically tens to hundreds of queries, and no gradient access is needed.
 
 **Example in DevAssist.** The code reviewer agent includes a binary classifier that tags commits as "likely vulnerable" or "safe" before they reach human review. An attacker with commit access runs a geometry-based attack against the classifier: they submit variations of a malicious commit, get accept/reject verdicts, and use the verdicts to triangulate the minimum code change that flips the classification from "vulnerable" to "safe". The final commit is indistinguishable from a legitimate one to the classifier, has taken about 150 queries to find, and carries the original vulnerability through to human review, where a hurried reviewer misses it. At no point did the attacker need to see the model, the weights, or the training data.
 
@@ -513,7 +568,7 @@ There are three flavours worth knowing. I will walk each one with a developer-fr
 
 **Design-time mitigations.**
 
-- Rate-limit probing aggressively. These attacks need hundreds or thousands of queries; a per-identity budget makes them infeasible.
+- Rate-limit probing aggressively. These attacks need hundreds or thousands of queries; a per-identity budget makes them infeasible. This doesn't protect against an adversary who has created a surogate model.
 - Do not return hard yes/no labels where you can avoid it. A "review" verdict for borderline cases denies the attacker the signal they need to triangulate.
 - Add detectable jitter near the boundary, or route borderline cases to a slower deterministic check. Boundary probing depends on the boundary being stable.
 - Enforce the high-impact decision in a deterministic layer behind the model. The ML classifier is a filter; a policy rule, business constraint, or human review is the security guarantee.
@@ -521,13 +576,13 @@ There are three flavours worth knowing. I will walk each one with a developer-fr
 
 ##### 2.2.4.2 Geometry-aware attacks on non-Euclidean models (AGSM)
 
-**The analogy.** Imagine a tree organisation chart drawn on a rubber sheet that has been stretched so that the root is in the middle and every node pushes its children outward toward the edge. Distance from the centre tells you depth in the hierarchy; angle around the centre tells you which branch you are on. Hyperbolic networks embed hierarchical data on exactly this kind of sheet. If you want to move an item on the chart without anyone noticing, you do not change its depth (humans would spot that) — you swing it sideways into a different branch.
+**The analogy.** Imagine a tree organisation chart drawn on a rubber sheet that has been stretched so that the root is in the middle and every node pushes its children outward toward the edge. Distance from the centre tells you depth in the hierarchy; angle around the centre tells you which branch you are on. Hyperbolic networks embed hierarchical data on exactly this kind of sheet. If you want to move an item on the chart without anyone noticing, you do not change its depth (humans would spot that): you swing it sideways into a different branch.
 
-**What's actually happening.** Hyperbolic neural networks are increasingly used for hierarchical data — taxonomies, file trees, knowledge graphs. They embed data on a curved surface rather than a flat one, and the semantic identity lives in the angular component of the embedding. Standard adversarial attacks (FGSM, PGD) were designed for flat Euclidean space and waste perturbation budget on directions that do not matter. The Angular Gradient Sign Method (AGSM, Jo et al., November 2025) decomposes the gradient into radial and angular components and perturbs only along the angular direction. The result is an adversarial example that is geometrically consistent with the hyperbolic structure and much more efficient than the Euclidean-naive alternatives.
+**What's actually happening.** Hyperbolic neural networks are increasingly used for hierarchical data: taxonomies, file trees, knowledge graphs. They embed data on a curved surface rather than a flat one, and the semantic identity lives in the angular component of the embedding. Standard adversarial attacks (FGSM, PGD) were designed for flat Euclidean space and waste perturbation budget on directions that do not matter. The Angular Gradient Sign Method (AGSM, Jo et al., November 2025) decomposes the gradient into radial and angular components and perturbs only along the angular direction. The result is an adversarial example that is geometrically consistent with the hyperbolic structure and much more efficient than the Euclidean-naive alternatives.
 
 **Example in DevAssist.** Suppose DevAssist uses a hyperbolic embedding to classify incident tickets against a hierarchical taxonomy of services (Infrastructure → Compute → Kubernetes → etcd). An attacker wants an etcd-related incident to be mis-routed to a less-monitored team. They craft an angular perturbation to the ticket text that rotates its embedding toward a different branch of the taxonomy without changing the depth. The ticket still looks like an infrastructure incident of roughly the same specificity, but it now routes to the wrong team, and the real problem goes unnoticed for hours.
 
-**References.** Jo, Kim, Park "Angular Gradient Sign Method: Uncovering Vulnerabilities in Hyperbolic Networks" (arXiv:2511.12985, November 2025). Applies to any system using hyperbolic embeddings — less common than Euclidean but increasing in production use for recommendation, taxonomy classification, and graph analysis.
+**References.** Jo, Kim, Park "Angular Gradient Sign Method: Uncovering Vulnerabilities in Hyperbolic Networks" (arXiv:2511.12985, November 2025). Applies to any system using hyperbolic embeddings, less common than Euclidean but increasing in production use for recommendation, taxonomy classification, and graph analysis.
 
 **Design-time mitigations.**
 
@@ -537,9 +592,9 @@ There are three flavours worth knowing. I will walk each one with a developer-fr
 
 ##### 2.2.4.3 Angular-margin attacks (face and voice recognition)
 
-**The analogy.** Imagine everyone who works at a company has a security badge that encodes their identity as a specific direction on a compass — Alice points north, Bob points north-north-east, Carol points east. The system verifies identity by measuring the angle between your badge's direction and the reference stored for that person. If the angle is within a tight threshold, access is granted. An attacker who understands the system is checking *angle, not pattern recognition* will target the angular relationship directly — tilt Alice's badge by just enough to match Bob's reference direction.
+**The analogy.** Imagine everyone who works at a company has a security badge that encodes their identity as a specific direction on a compass: Alice points north, Bob points north-north-east, Carol points east. The system verifies identity by measuring the angle between your badge's direction and the reference stored for that person. If the angle is within a tight threshold, access is granted. An attacker who understands the system is checking *angle, not pattern recognition* will target the angular relationship directly: tilt Alice's badge by just enough to match Bob's reference direction.
 
-**What's actually happening.** Modern face recognition models (ArcFace, CosFace, SphereFace) and many speaker recognition systems train with angular-margin loss functions. Each identity is mapped to a specific direction on a high-dimensional hypersphere, with explicit angular margins between identities. Classification is done by cosine similarity — the angle between the query embedding and the stored reference. Adversarial attacks against these systems do not try to make Alice's photo look like Bob's photo to a human; they craft a perturbation that rotates Alice's *embedding* on the hypersphere into Bob's angular margin. Two photos, both clearly Alice to a human; the embedding has been angularly rotated to impersonate Bob.
+**What's actually happening.** Modern face recognition models (ArcFace, CosFace, SphereFace) and many speaker recognition systems train with angular-margin loss functions. Each identity is mapped to a specific direction on a high-dimensional hypersphere, with explicit angular margins between identities. Classification is done by cosine similarity: the angle between the query embedding and the stored reference. Adversarial attacks against these systems do not try to make Alice's photo look like Bob's photo to a human; they craft a perturbation that rotates Alice's *embedding* on the hypersphere into Bob's angular margin. Two photos, both clearly Alice to a human; the embedding has been angularly rotated to impersonate Bob.
 
 **Example in DevAssist.** DevAssist does not use face recognition, but some organisations deploying agents behind biometric authentication will. The relevant scenario: an agent-accessed admin dashboard uses voice authentication (angular-margin speaker recognition) to authorise high-privilege actions. An attacker records a few seconds of the target admin's voice, crafts an imperceptible audio perturbation that rotates the speaker embedding toward the admin's reference direction on the hypersphere, and plays it into the microphone. The audio still sounds like the attacker's voice to a human; the embedding has been angularly rotated. The dashboard grants admin access.
 
@@ -554,7 +609,7 @@ There are three flavours worth knowing. I will walk each one with a developer-fr
 
 ##### 2.2.4.4 The thread that connects all three
 
-All three attacks are variants of the same idea: **the model's decision depends on geometry, and the attacker exploits whichever geometry you chose**. Flat hyperplane (§2.2.4.1), curved hyperbolic sheet (§2.2.4.2), or hypersphere with angular margins (§2.2.4.3) — the underlying principle and the defence pattern are identical.
+All three attacks are variants of the same idea: **the model's decision depends on geometry, and the attacker exploits whichever geometry you chose**. Flat hyperplane (§2.2.4.1), curved hyperbolic sheet (§2.2.4.2), or hypersphere with angular margins (§2.2.4.3). The underlying principle and the defence pattern are identical.
 
 This is the Cox point in another suit: the boundary is the attack surface, and the boundary is largely determined by the problem rather than by you. You cannot patch the geometry. You can only refuse to depend on it for anything that matters.
 
@@ -572,27 +627,27 @@ This matters for threat modelling because it means the subspace problem is not a
 
 ##### 2.2.5.2 Why it is the deepest reason structural defences beat statistical ones
 
-Every entry in the OWASP LLM Top 10 and the Agentic Top 10 implicitly assumes some model-layer defence can be strengthened — better refusals, better guardrails, better classifiers, better content policies, better alignment. The subspace problem is the bound on how far any of those efforts can go.
+Every entry in the OWASP LLM Top 10 and the Agentic Top 10 implicitly assumes some model-layer defence can be strengthened: better refusals, better guardrails, better classifiers, better content policies, better alignment. The subspace problem is the bound on how far any of those efforts can go.
 
 Statistical defences (pattern-matching guardrails, blocklists, refusal training, content classifiers, output filters) are all built on the premise that you can enumerate or generalise across the inputs that lead to bad behaviour. The subspace problem says: the inputs that lead to any given behaviour form a region mathematically too large to enumerate and too irregular to generalise over reliably. Every statistical defence, no matter how well-trained, covers a vanishing fraction of the space it is trying to cover. Increments of effort produce sub-linear increments of coverage. The asymptote is not 100%.
 
-Structural defences (deterministic enforcement outside the model, authorisation at the data layer, human confirmation on consequential actions, allow-listed tool arguments, rate limits and budgets) are not subject to this bound. They operate on the model's *output* rather than on the model's *input space*, and their correctness does not depend on having seen the specific perturbation an attacker is about to use. This is why structural defences beat statistical ones in AI systems — not as a general architectural preference, but as a consequence of a specific mathematical property of the systems being defended.
+Structural defences (deterministic enforcement outside the model, authorisation at the data layer, human confirmation on consequential actions, allow-listed tool arguments, rate limits and budgets) are not subject to this bound. They operate on the model's *output* rather than on the model's *input space*, and their correctness does not depend on having seen the specific perturbation an attacker is about to use. This is why structural defences beat statistical ones in AI systems, not as a general architectural preference, but as a consequence of a specific mathematical property of the systems being defended.
 
-This also explains a frustrating empirical observation: commercial AI products with enormous investment in safety training and guardrails continue to be jailbroken, often by techniques that appear trivial in retrospect. The investment is not wasted — it shifts the average — but it is mathematically guaranteed to miss most of the subspace. The Cox & Bunzel (2025) quantification of transferable black-box attacks is the current state-of-the-art measurement of how large these gaps are, and the answer is: much larger than the defences deployed against them.
+This also explains a frustrating empirical observation: commercial AI products with enormous investment in safety training and guardrails continue to be jailbroken, often by techniques that appear trivial in retrospect. The investment is not wasted (it shifts the average) but it is mathematically guaranteed to miss most of the subspace. The Cox & Bunzel (2025) quantification of transferable black-box attacks is the current state-of-the-art measurement of how large these gaps are, and the answer is: much larger than the defences deployed against them.
 
-##### 2.2.5.3 A second worked example — the subspace problem as a non-security incident
+##### 2.2.5.3 A second worked example - the subspace problem as a non-security incident
 
 The Lucy and Marco example in Section 2.0 showed the subspace problem from an attacker's (or curious-engineer's) perspective. Here is a different kind of example, because it matters that readers see the problem manifests even without anyone trying to cause harm.
 
-DevAssist's code reviewer agent has been told, in its system prompt, to refuse to review commits that touch the authentication service without a senior reviewer being cc'd on the pull request. The rule is a soft compliance control: the team wants awareness of auth changes, not an absolute block. It is enforced entirely at the model layer — the system prompt tells the model to refuse, and the team has verified through testing that the refusal fires on obvious cases.
+DevAssist's code reviewer agent has been told, in its system prompt, to refuse to review commits that touch the authentication service without a senior reviewer being cc'd on the pull request. The rule is a soft compliance control: the team wants awareness of auth changes, not an absolute block. It is enforced entirely at the model layer: the system prompt tells the model to refuse, and the team has verified through testing that the refusal fires on obvious cases.
 
 Over the course of a quarter, the team notices that the refusal fires about 80% of the time when it should. The other 20% of the time, the agent happily reviews auth commits without flagging them. Nobody has been attacking the system. The engineers involved were not trying to bypass the rule. They were just asking the agent to review their PRs in whatever phrasing felt natural on a given Tuesday.
 
-The investigation reveals what happened. "Please review PR #4521" fires the refusal when PR #4521 touches auth. "Can you take a look at this?" with the same PR attached does not, because the phrasing lands in a slightly different numerical region of the model's representation — one that the system prompt's refusal rule does not cleanly cover. "Review the attached changes" behaves differently again. "Check this over for me" different still. Across hundreds of real engineer interactions, the natural variation in human phrasing produces natural variation in which numerical region the input lands in, and the refusal fires inconsistently as a consequence.
+The investigation reveals what happened. "Please review PR #4521" fires the refusal when PR #4521 touches auth. "Can you take a look at this?" with the same PR attached does not, because the phrasing lands in a slightly different numerical region of the model's representation, one that the system prompt's refusal rule does not cleanly cover. "Review the attached changes" behaves differently again. "Check this over for me" different still. Across hundreds of real engineer interactions, the natural variation in human phrasing produces natural variation in which numerical region the input lands in, and the refusal fires inconsistently as a consequence.
 
 No attacker. No jailbreak. No adversarial intent anywhere. Just the subspace problem manifesting as a quality-of-service failure that happens to coincide with a compliance failure.
 
-This is the version of the subspace problem that will bite most real deployments most often. Not the dramatic jailbreak scenario, but the slow erosion of any model-layer control by the mundane variance of how humans actually write. If the auth-review rule matters — and if the team believes it matters enough to put in the system prompt, presumably it does — the fix is to move it out of the model entirely. A pre-commit hook on the repository, a CI check on the PR, or a webhook that notices auth-path changes and adds a senior reviewer automatically. Any of those is deterministic. None of them is subject to whether the engineer happened to phrase the request in a numerical region the model learned to handle.
+This is the version of the subspace problem that will bite most real deployments most often. Not the dramatic jailbreak scenario, but the slow erosion of any model-layer control by the mundane variance of how humans actually write. If the auth-review rule matters (and if the team believes it matters enough to put in the system prompt, presumably it does) the fix is to move it out of the model entirely. A pre-commit hook on the repository, a CI check on the PR, or a webhook that notices auth-path changes and adds a senior reviewer automatically. Any of those is deterministic. None of them is subject to whether the engineer happened to phrase the request in a numerical region the model learned to handle.
 
 ##### 2.2.5.4 Mitigations
 
@@ -605,7 +660,7 @@ The mitigations for the subspace problem are the same as for geometric attacks a
 
 ##### 2.2.5.5 References
 
-Foundational: Goodfellow, Shlens, Szegedy (2015), "Explaining and Harnessing Adversarial Examples". Tramèr et al. (2017), "The Space of Transferable Adversarial Examples". Contemporary: Cox & Bunzel (2025), "Quantifying the Risk of Transferred Black Box Attacks" — the current SOTA on measuring transferable attack subspace size. Surface example: HiddenLayer's EchoGram disclosure (November 2025), a demonstration of subspace exploitation via nonsense-suffix perturbation against commercial LLM guardrails.
+Foundational: Goodfellow, Shlens, Szegedy (2015), "Explaining and Harnessing Adversarial Examples". Tramèr et al. (2017), "The Space of Transferable Adversarial Examples". Contemporary: Cox & Bunzel (2025), "Quantifying the Risk of Transferred Black Box Attacks": the current SOTA on measuring transferable attack subspace size. Surface example: HiddenLayer's EchoGram disclosure (November 2025), a demonstration of subspace exploitation via nonsense-suffix perturbation against commercial LLM guardrails.
 
 ### 2.3 Privacy threats
 
@@ -802,8 +857,8 @@ The Manifesto offers values and principles rather than a checklist; the closest 
 - Each threat is traceable to a component, a trust boundary, or a flow on the DFD.
 - Adversarial, structural, and privacy lenses have all been applied.
 - For each threat, a plain-English example specific to the system (not a generic "an attacker could..." sentence).
-- The team can name threats that were *considered and rejected* as well as ones that were accepted as risks. If you only have "confirmed threats", you have not actually walked the surface.
-- MCP and any agentic components have been walked separately from the base LLM threats.
+- The team can name threats that were *considered and rejected* as well as ones that were accepted as risks. If you only have "confirmed threats", you have not actually covered the entire attack surface.
+- MCP and any agentic components have been covered separately from the base LLM threats.
 
 **Question 3 evidence: What are we going to do about it.**
 
@@ -835,16 +890,16 @@ The Manifesto has five values. Each one translates into a concrete question to a
 
 ### 4.3 A specific acceptance checklist for DevAssist
 
-Walking the abstract criteria onto the running example. This is the kind of checklist you produce at the end of a session and sign off against.
+Covering the abstract criteria in the running example. This is the kind of checklist you produce at the end of a session and sign off against.
 
 - [ ] DFD reflects DevAssist as it will actually ship, including every MCP server actually installed.
 - [ ] Trust boundaries include the hosted LLM vendor, the community utilities MCP server, the shared vector store, and the memory store.
-- [ ] Each of LLM01 through LLM10 has been walked with a DevAssist-specific example or an explicit "does not apply because..." note.
-- [ ] Each of ASI01 through ASI10 has been walked with the same discipline.
+- [ ] Each of LLM01 through LLM10 has been covered with a DevAssist-specific example or an explicit "does not apply because..." note.
+- [ ] Each of ASI01 through ASI10 has been covered with the same discipline.
 - [ ] Context rot has been explicitly considered for the longest realistic session (the three-hour debugging scenario).
 - [ ] Cox transferability has been acknowledged in the design review as a reason not to rely on model robustness for any security guarantee.
-- [ ] LINDDUN has been walked against the full data flow, not just the prompts.
-- [ ] T.R.I.M. has been walked with specific attention to output minimisation and to hallucinated personal data in memory.
+- [ ] LINDDUN has been covered against the full data flow, not just the prompts.
+- [ ] T.R.I.M. has been covered with specific attention to output minimisation and to hallucinated personal data in memory.
 - [ ] GDPR Article 5 mapping exists and the Article 16/17 executability has been demonstrated on a test case.
 - [ ] Each MCP server has been reviewed under the seven-question template (provenance, isolation, credentials, tool surface, cross-server exposure, update model, observability).
 - [ ] The community utilities MCP server has either been removed or source-reviewed and sandboxed.
@@ -874,7 +929,7 @@ Worth being blunt about this, because the industry is full of bad definitions.
 Walking through this document, you should now be able to:
 
 - Draw the DFD and name the trust boundaries for a typical LLM, RAG, or agentic system.
-- Walk the OWASP LLM Top 10 and the Agentic Top 10 against that DFD, producing system-specific threat examples rather than generic ones.
+- Walk-through the OWASP LLM Top 10 and the Agentic Top 10 against that DFD, producing system-specific threat examples rather than generic ones.
 - Recognise the structural hazards the OWASP lists do not cover: context rot as guardrail decay, and transferable decision boundaries as the reason runtime model robustness is not the leverage point.
 - Apply LINDDUN, T.R.I.M., and GDPR Article 5 as complementary privacy lenses, and explain why hallucinations are a privacy event, not just a quality event.
 - Threat model an MCP deployment as something with its own trust boundaries, supply chain, credential scope, and cross-server data flow concerns.
@@ -883,7 +938,7 @@ Walking through this document, you should now be able to:
 
 ### Final thoughts
 
-The deeper message, and the one worth taking into any design review, is that the soft substrates AI systems depend on — attention weights, shared decision boundaries, lossy numerical representations — are not surfaces we can make load-bearing for security. This is the Cox thesis: you cannot patch the geometry, you cannot enumerate the subspace, and you cannot rely on the model's refusal behaviour. What you can do is enforce every consequential guarantee in a deterministic layer outside the model. The model is a filter; the enforcement is elsewhere. Get that architectural split right and most of the threats in this document become survivable. Get it wrong and no amount of runtime red teaming will save you.
+The deeper message, and the one worth taking into any design review, is that the soft substrates AI systems depend on (attention weights, shared decision boundaries, lossy numerical representations) are not surfaces we can make load-bearing for security. This is the Cox thesis: you cannot patch the geometry, you cannot enumerate the subspace, and you cannot rely on the model's refusal behaviour. What you can do is enforce every consequential guarantee in a deterministic layer outside the model. The model is a filter; the enforcement is elsewhere. Get that architectural split right and most of the threats in this document become survivable. Get it wrong and no amount of runtime red teaming will save you.
 
 The OWASP lists, the research from Chroma and from Cox, the LINDDUN and T.R.I.M. frameworks, and the Threat Modeling Manifesto are all pointing in the same direction. The tools exist. What is missing is people doing the work at the point in the lifecycle where it matters. That is on us.
 
@@ -891,11 +946,11 @@ Happy threat modelling.
 
 ### Acknowledgements and research attribution
 
-This work synthesises research, frameworks, and practitioner wisdom from a wide range of sources. Where I have drawn on specific research or frameworks, I want to credit them clearly — partly because it is the right thing to do, and partly because the reader who wants to go deeper deserves a pointer to the source rather than a paraphrase of it.
+This work synthesises research, frameworks, and practitioner wisdom from a wide range of sources. Where I have drawn on specific research or frameworks, I want to credit them clearly: partly because it is the right thing to do, and partly because the reader who wants to go deeper deserves a pointer to the source rather than a paraphrase of it.
 
 ### Frameworks and standards
 
-- **OWASP GenAI Security Project** for the OWASP Top 10 for LLM Applications (2025) and the OWASP Top 10 for Agentic Applications (2026, released 10 December 2025). The community behind this work — over 100 contributors across the Top 10 for LLM and the Agentic Top 10 — has given the practitioner community a shared vocabulary we did not have two years ago.
+- **OWASP GenAI Security Project** for the OWASP Top 10 for LLM Applications (2025) and the OWASP Top 10 for Agentic Applications (2026, released 10 December 2025). The community behind this work (over 100 contributors across the Top 10 for LLM and the Agentic Top 10) has given the practitioner community a shared vocabulary we did not have two years ago.
 - **OWASP AI Exchange**, particularly the core author team including Disesdi Shoshana Cox, for the integrated approach to AI security, privacy, and policy.
 - **Threat Modeling Manifesto** contributors, whose four questions and five values form the backbone of this document's structure.
 - **LINDDUN** privacy threat modelling framework, from the DistriNet research group at KU Leuven.
@@ -911,7 +966,7 @@ This work synthesises research, frameworks, and practitioner wisdom from a wide 
 - **Guo, Gong, Lin, Yang and Zhang** (2024), "Exploring the Adversarial Frontier: Quantifying Robustness via Adversarial Hypervolume", IEEE TETCI 9, 1367–1378. A framework for quantifying robustness across the spectrum of perturbation strengths rather than at a single threshold.
 - **Cox and Bunzel** (2025), "Quantifying the Risk of Transferred Black Box Attacks", arXiv:2511.05102. The current state of the art in measuring adversarial subspace size and transferability risk, and the empirical backbone for much of the "design-time over runtime" framing in this document.
 - **Esra and Cox** (2024), US Patent 12,093,400 B1, *Systems and Methods for Model Security in Distributed Model Training Applications*. The architectural embodiment of edge-layered security review in federated learning pipelines, and the operational counterpart to Cox's writing on AI security architecture.
-- **Chroma Research** — Hong, Troynikov, Huber (2025), "Context Rot: How Increasing Input Tokens Impacts LLM Performance".
+- **Chroma Research**: Hong, Troynikov, Huber (2025), "Context Rot: How Increasing Input Tokens Impacts LLM Performance".
 - **Liu et al.** (2023), "Lost in the Middle: How Language Models Use Long Contexts", TACL.
 - **Rahmati et al.** (2020), "GeoDA: A Geometric Framework for Black-Box Adversarial Attacks", CVPR 2020.
 - **Maho, Furon, Le Merrer** (2021), "SurFree: A Fast Surrogate-Free Black-Box Attack", CVPR 2021.
@@ -920,13 +975,13 @@ This work synthesises research, frameworks, and practitioner wisdom from a wide 
 
 ### Practitioners
 
-- **Disesdi Shoshana Cox** (also published as Disesdi Susanna Cox) — whose writing at *Angles of Attack* and training through Shostack + Associates translates the transferability research into the AI security operational space, and whose framing of "threat modelling is everything, red teaming is dead" has shaped the design-time emphasis throughout these documents. Her "How To Steal A Model" essay is the best single piece of writing I know on why runtime model red teaming tests the wrong thing.
+- **Disesdi Shoshana Cox** (also published as Disesdi Susanna Cox): whose writing at *Angles of Attack* and training through Shostack + Associates translates the transferability research into the AI security operational space, and whose framing of "threat modelling is everything, red teaming is dead" has shaped the design-time emphasis throughout these documents. Her "How To Steal A Model" essay is the best single piece of writing I know on why runtime model red teaming tests the wrong thing.
 - **Palo Alto Unit 42** for the Agent Session Smuggling research demonstrating A2A protocol exploitation in multi-agent systems.
 - **The Koi.ai, Astrix, Aembit, HUMAN Security and Invicti teams** whose analyses of the OWASP Agentic Top 10 in the weeks following its release informed the treatment of identity and privilege abuse in this work.
 
-### Special acknowledgement — Disesdi Shoshana Cox
+### Special acknowledgement - Disesdi Shoshana Cox
 
-One contributor deserves more than a line in a list. Disesdi Shoshana Cox (also published as Disesdi Susanna Cox) sits across both sides of the research/practitioner split in this document. Her peer-reviewed work — particularly Cox and Bunzel (2025) on quantifying black-box transferability, and the US patent with Esra (2024) on federated model security architecture — is the empirical and architectural backbone for the "design-time over runtime" framing that runs through these documents. Her practitioner writing at *Angles of Attack* translates that research into language that engineers and leaders can act on, and her "AI red teaming has a subspace problem" (November 2025) is the piece that pushed the adversarial subspace problem from academic footnote into the operational threat model it deserves to be. The reframing of threat modelling as the primary leverage point, rather than runtime red teaming, is substantially hers. This document is better for her work, and for the conversations that led me down the rabbit hole of decision boundaries in the first place. Thank you.
+One contributor deserves more than a line in a list. Disesdi Shoshana Cox (also published as Disesdi Susanna Cox) sits across both sides of the research/practitioner split in this document. Her peer-reviewed work (particularly Cox and Bunzel (2025) on quantifying black-box transferability, and the US patent with Esra (2024) on federated model security architecture) is the empirical and architectural backbone for the "design-time over runtime" framing that runs through these documents. Her practitioner writing at *Angles of Attack* translates that research into language that engineers and leaders can act on, and her "AI red teaming has a subspace problem" (November 2025) is the piece that pushed the adversarial subspace problem from academic footnote into the operational threat model it deserves to be. The reframing of threat modelling as the primary leverage point, rather than runtime red teaming, is substantially hers. This document is better for her work, and for the conversations that led me down the rabbit hole of decision boundaries in the first place. Thank you.
 
 
 ---

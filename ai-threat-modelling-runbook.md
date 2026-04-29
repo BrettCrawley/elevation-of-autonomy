@@ -10,15 +10,15 @@ This is a working document for the person facilitating a threat modelling sessio
 
 The runbook is organised into five phases:
 
-1. **Pre-session** — what you do before anyone walks in the room.
-2. **Phase 1: Frame the system** — "What are we working on?"
-3. **Phase 2: Walk the threats** — "What can go wrong?"
-4. **Phase 3: Agree the mitigations** — "What are we going to do about it?"
-5. **Post-session** — "Did we do a good enough job?" and keeping the threat model alive.
+1. **Pre-session**: what you do before anyone walks in the room.
+2. **Phase 1: Frame the system**: "What are we working on?"
+3. **Phase 2: Walk-through the threats**: "What can go wrong?"
+4. **Phase 3: Agree the mitigations**: "What are we going to do about it?"
+5. **Post-session**: "Did we do a good enough job?" and keeping the threat model alive.
 
 Each phase has a checklist, a set of facilitator prompts, and a time box. Total session time is between 90 minutes (small feature) and a full day (a net-new agentic system like DevAssist). Do not try to do it all in one meeting for anything complex. Better to run three focused two-hour sessions than one death march.
 
-**Note to facilitators:** your job is not to be the expert on every threat. Your job is to make sure the team walks the surface, argues honestly, and leaves with design changes. If you find yourself doing all the talking, you are in the wrong role.
+**Note to facilitators:** your job is not to be the expert on every threat. Your job is to make sure the team covers the entire attack surface, argues honestly, and leaves with design changes. If you find yourself doing all the talking, you are in the wrong role.
 
 ---
 
@@ -114,11 +114,11 @@ A DFD, a list of assets, a list of actors, a list of trust boundaries, and a lis
 
 ---
 
-## Phase 2: Walk the threats (What can go wrong?)
+## Phase 2: Walk-through the threats (What can go wrong?)
 
 **Time box: 60–180 minutes, depending on complexity.**
 
-This is the longest phase. The structure here is four passes, each using a different lens, walking the DFD each time. Do not try to brainstorm threats from scratch. The lenses exist so you do not miss things.
+This is the longest phase. The structure here is four passes, each using a different lens, walking through the DFD each time. Do not try to brainstorm threats from scratch. The lenses exist so you do not miss things.
 
 For each threat identified, capture:
 
@@ -132,17 +132,17 @@ For each threat identified, capture:
 
 **Time box: 30–60 minutes.**
 
-Walk each OWASP entry against the DFD. For each one, ask the team: "Does this apply to our system? If yes, give me an example. If no, tell me why not."
+Walk-through each OWASP entry against the DFD. For each one, ask the team: "Does this apply to our system? If yes, give me an example. If no, tell me why not."
 
 The "why not" is as important as the "yes". It forces the team to justify exclusions and catches assumptions.
 
 #### LLM Top 10 checklist
 
-- [ ] **LLM01 Prompt Injection.** Walk every input channel: user prompt, RAG, tool outputs, memory, agent-to-agent messages. For each, ask "what stops a hostile instruction reaching the model through this path?"
-- [ ] **LLM02 Sensitive Information Disclosure.** Ask: "What personal data or secrets could the model emit? What stops it?" Walk both training-time leakage and retrieval-time leakage.
+- [ ] **LLM01 Prompt Injection.** Walk-through every input channel: user prompt, RAG, tool outputs, memory, agent-to-agent messages. For each, ask "what stops a hostile instruction reaching the model through this path?"
+- [ ] **LLM02 Sensitive Information Disclosure.** Ask: "What personal data or secrets could the model emit? What stops it?" Walk-through both training-time leakage and retrieval-time leakage.
 - [ ] **LLM03 Supply Chain.** List every external dependency: base model, fine-tunes, adapters, libraries, MCP servers, prompt templates. For each, ask "what happens if this gets compromised tomorrow?"
 - [ ] **LLM04 Data and Model Poisoning.** Ask: "Who can write to the training data, the fine-tuning data, or the RAG corpus? What review happens?"
-- [ ] **LLM05 Improper Output Handling.** Walk every downstream consumer of model output: the renderer, the tool caller, the logger, the next agent. Ask: "What does this consumer assume about the trustworthiness of the model's output?"
+- [ ] **LLM05 Improper Output Handling.** Walk-through every downstream consumer of model output: the renderer, the tool caller, the logger, the next agent. Ask: "What does this consumer assume about the trustworthiness of the model's output?"
 - [ ] **LLM06 Excessive Agency.** For each tool: "Does the agent need this tool for the stated task? Does it need the permissions it has? Does it need autonomy, or should a human confirm?"
 - [ ] **LLM07 System Prompt Leakage.** Ask: "What is in the system prompt that we would not want a user to see? If anything, move it out."
 - [ ] **LLM08 Vector and Embedding Weaknesses.** For any RAG system: "Is access control enforced at retrieval or just at the UI? Is the store tenant-partitioned? Who can add content?"
@@ -194,9 +194,9 @@ These are the failures that happen without an attacker and that the OWASP lists 
 
 **Time box: 30–45 minutes if personal data is in scope. Skip if there is genuinely no personal data, but be sceptical; "no personal data" is rarely true.**
 
-Walk the DFD again, this time asking privacy questions. I find it works best to do T.R.I.M. first as an accessible warm-up, then LINDDUN for depth, then map to GDPR Article 5 at the end.
+Walk-through the DFD again, this time asking privacy questions. I find it works best to do T.R.I.M. first as an accessible warm-up, then LINDDUN for depth, then map to GDPR Article 5 at the end.
 
-#### T.R.I.M. four-card walk
+#### T.R.I.M. four-card walk-through
 
 For each data flow carrying personal data on the DFD:
 
@@ -205,7 +205,7 @@ For each data flow carrying personal data on the DFD:
 - [ ] **Inference.** "What new personal data does the model create on this flow that was not in the input? Is any of it special-category under GDPR Article 9? What is our basis for creating it?"
 - [ ] **Minimisation.** Two sub-questions: "Is the input minimal for the task?" and "Is the output minimal for the task? Is the model generating more personal data than the user asked for?"
 
-#### LINDDUN seven-category walk
+#### LINDDUN seven-category walk-through
 
 - [ ] **Linking.** "What links between data points does this system create that did not exist before?"
 - [ ] **Identifying.** "Where does the system turn partial or pseudonymous data into identification?"
@@ -226,11 +226,11 @@ For each data flow carrying personal data on the DFD:
 - [ ] **Article 22.** "Does any model output feed an automated decision with legal or similarly significant effect? If yes, there are separate obligations."
 - [ ] **EU AI Act overlay.** "What risk tier is this system under the AI Act, and what does that trigger?"
 
-### Pass 4: MCP-specific walk
+### Pass 4: MCP-specific walk-through
 
 **Time box: 15 minutes per MCP server. Skip if there are no MCP or plugin components.**
 
-For each installed MCP server or equivalent plugin, walk the seven-question template:
+For each installed MCP server or equivalent plugin, walk-through the seven-question template:
 
 - [ ] **Provenance.** Who wrote it? How was it installed? Is the version pinned? Is there an SBOM? Has anyone from our team read the source?
 - [ ] **Process isolation.** Where does it run? As which user? What can it read on the host? What network egress does it have by default?
@@ -286,7 +286,7 @@ If three out of four mitigations are runtime filters and guardrails, you are bui
 
 ### Categories of mitigation worth checking
 
-Walk through these quickly as a backstop. For each, ask "do we need one of these, and if so, where?"
+Walk-through these quickly as a backstop. For each, ask "do we need one of these, and if so, where?"
 
 - [ ] **Design-time structural controls:** least agency, scoped credentials, authorisation at the data layer, sandboxed code execution, MCP isolation, treat retrieved content as untrusted.
 - [ ] **Runtime controls:** rate and cost limits, loop caps, context rot mitigation (periodic re-injection, fresh sessions for high-stakes), output filters, observability.

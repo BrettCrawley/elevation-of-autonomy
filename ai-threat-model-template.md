@@ -14,8 +14,8 @@ Italicised text in square brackets like *[fill this in]* is instructional and sh
 
 This template should be used alongside:
 
-- *Threat Modelling AI, LLM and Agentic Systems* — the reference document covering the underlying frameworks.
-- *AI / LLM / Agentic Threat Modelling Runbook* — the facilitator guide for running the session that produced this artefact.
+- *Threat Modelling AI, LLM and Agentic Systems*: the reference document covering the underlying frameworks.
+- *AI / LLM / Agentic Threat Modelling Runbook*: the facilitator guide for running the session that produced this artefact.
 
 **Note to the reader:** if you are reading a completed version of this template and something is unclear, the person to ask is the facilitator named in the metadata below. If that person no longer has context, the threat model is stale and needs a new session.
 
@@ -153,55 +153,55 @@ flowchart TB
 
 #### Adversarial (OWASP LLM Top 10 and Agentic Top 10)
 
-- [ ] **LLM01 Prompt Injection** — IDs: *[list]*
-- [ ] **LLM02 Sensitive Information Disclosure** — IDs: *[list]*
-- [ ] **LLM03 Supply Chain** — IDs: *[list]*
-- [ ] **LLM04 Data and Model Poisoning** — IDs: *[list]*
-- [ ] **LLM05 Improper Output Handling** — IDs: *[list]*
-- [ ] **LLM06 Excessive Agency** — IDs: *[list]*
-- [ ] **LLM07 System Prompt Leakage** — IDs: *[list]*
-- [ ] **LLM08 Vector and Embedding Weaknesses** — IDs: *[list or N/A]*
-- [ ] **LLM09 Misinformation** — IDs: *[list]*
-- [ ] **LLM10 Unbounded Consumption** — IDs: *[list]*
-- [ ] **ASI01 Agent Goal Hijack** — IDs: *[list or N/A if not agentic]*
-- [ ] **ASI02 Tool Misuse and Exploitation** — IDs: *[list]*
-- [ ] **ASI03 Identity and Privilege Abuse** — IDs: *[list]*
-- [ ] **ASI04 Agentic Supply Chain** — IDs: *[list]*
-- [ ] **ASI05 Unexpected Code Execution** — IDs: *[list]*
-- [ ] **ASI06 Memory and Context Poisoning** — IDs: *[list]*
-- [ ] **ASI07 Inter-Agent Communication Exploitation** — IDs: *[list]*
-- [ ] **ASI08 Cascading Failures** — IDs: *[list]*
-- [ ] **ASI09 Human-Agent Trust Exploitation** — IDs: *[list]*
-- [ ] **ASI10 Rogue Agents** — IDs: *[list]*
+- [ ] **LLM01 Prompt Injection**: IDs: *[list]*
+- [ ] **LLM02 Sensitive Information Disclosure**: IDs: *[list]*
+- [ ] **LLM03 Supply Chain**: IDs: *[list]*
+- [ ] **LLM04 Data and Model Poisoning**: IDs: *[list]*
+- [ ] **LLM05 Improper Output Handling**: IDs: *[list]*
+- [ ] **LLM06 Excessive Agency**: IDs: *[list]*
+- [ ] **LLM07 System Prompt Leakage**: IDs: *[list]*
+- [ ] **LLM08 Vector and Embedding Weaknesses**: IDs: *[list or N/A]*
+- [ ] **LLM09 Misinformation**: IDs: *[list]*
+- [ ] **LLM10 Unbounded Consumption**: IDs: *[list]*
+- [ ] **ASI01 Agent Goal Hijack**: IDs: *[list or N/A if not agentic]*
+- [ ] **ASI02 Tool Misuse and Exploitation**: IDs: *[list]*
+- [ ] **ASI03 Identity and Privilege Abuse**: IDs: *[list]*
+- [ ] **ASI04 Agentic Supply Chain**: IDs: *[list]*
+- [ ] **ASI05 Unexpected Code Execution**: IDs: *[list]*
+- [ ] **ASI06 Memory and Context Poisoning**: IDs: *[list]*
+- [ ] **ASI07 Inter-Agent Communication Exploitation**: IDs: *[list]*
+- [ ] **ASI08 Cascading Failures**: IDs: *[list]*
+- [ ] **ASI09 Human-Agent Trust Exploitation**: IDs: *[list]*
+- [ ] **ASI10 Rogue Agents**: IDs: *[list]*
 
 #### Structural hazards
 
-- [ ] **Context rot** — IDs: *[list]*
-- [ ] **Hallucination (structural)** — IDs: *[list]*
-- [ ] **Transferable decision boundaries** — IDs: *[list or "acknowledged as assumed-broken control, see mitigation X"]*
-- [ ] **Decision-boundary probing attacks** — IDs: *[list or "acknowledged, deterministic gate downstream of classifier"]*
-- [ ] **Geometry-aware attacks on non-Euclidean models** — IDs: *[list or N/A if Euclidean only]*
-- [ ] **Angular-margin attacks** — IDs: *[list or N/A if no biometric or cosine-similarity matching used]*
-- [ ] **Geometric adversarial attacks (boundary probing, AGSM, angular-margin)** — IDs: *[list or N/A]*
-- [ ] **Adversarial subspace problem** — IDs: *[list or "acknowledged; structural enforcement downstream of all model decisions confirmed in mitigation matrix"]*
+- [ ] **Context rot**: IDs: *[list]*
+- [ ] **Hallucination (structural)**: IDs: *[list]*
+- [ ] **Transferable decision boundaries**: IDs: *[list or "acknowledged as assumed-broken control, see mitigation X"]*
+- [ ] **Decision-boundary probing attacks**: IDs: *[list or "acknowledged, deterministic gate downstream of classifier"]*
+- [ ] **Geometry-aware attacks on non-Euclidean models**: IDs: *[list or N/A if Euclidean only]*
+- [ ] **Angular-margin attacks**: IDs: *[list or N/A if no biometric or cosine-similarity matching used]*
+- [ ] **Geometric adversarial attacks (boundary probing, AGSM, angular-margin)**: IDs: *[list or N/A]*
+- [ ] **Adversarial subspace problem**: IDs: *[list or "acknowledged; structural enforcement downstream of all model decisions confirmed in mitigation matrix"]*
 
 #### Privacy (LINDDUN, T.R.I.M., GDPR)
 
-- [ ] **LINDDUN Linking** — IDs: *[list]*
-- [ ] **LINDDUN Identifying** — IDs: *[list]*
-- [ ] **LINDDUN Non-repudiation** — IDs: *[list]*
-- [ ] **LINDDUN Detecting** — IDs: *[list]*
-- [ ] **LINDDUN Data Disclosure** — IDs: *[list]*
-- [ ] **LINDDUN Unawareness/Unintervenability** — IDs: *[list]*
-- [ ] **LINDDUN Non-compliance** — IDs: *[list]*
-- [ ] **T.R.I.M. Transfer** — IDs: *[list]*
-- [ ] **T.R.I.M. Retention/Removal** — IDs: *[list]*
-- [ ] **T.R.I.M. Inference** — IDs: *[list]*
-- [ ] **T.R.I.M. Minimisation (input and output)** — IDs: *[list]*
-- [ ] **GDPR Article 5 principles walked** — Notes: *[which principles engaged, and how]*
-- [ ] **GDPR Article 16/17 executability verified** — Notes: *[can you actually rectify and erase?]*
-- [ ] **GDPR Article 22 applicability assessed** — Notes: *[automated decision making with legal effect?]*
-- [ ] **EU AI Act risk tier determined** — Tier: *[minimal / limited / high / prohibited / GPAI]*
+- [ ] **LINDDUN Linking**: IDs: *[list]*
+- [ ] **LINDDUN Identifying**: IDs: *[list]*
+- [ ] **LINDDUN Non-repudiation**: IDs: *[list]*
+- [ ] **LINDDUN Detecting**: IDs: *[list]*
+- [ ] **LINDDUN Data Disclosure**: IDs: *[list]*
+- [ ] **LINDDUN Unawareness/Unintervenability**: IDs: *[list]*
+- [ ] **LINDDUN Non-compliance**: IDs: *[list]*
+- [ ] **T.R.I.M. Transfer**: IDs: *[list]*
+- [ ] **T.R.I.M. Retention/Removal**: IDs: *[list]*
+- [ ] **T.R.I.M. Inference**: IDs: *[list]*
+- [ ] **T.R.I.M. Minimisation (input and output)**: IDs: *[list]*
+- [ ] **GDPR Article 5 principles covered**: Notes: *[which principles engaged, and how]*
+- [ ] **GDPR Article 16/17 executability verified**: Notes: *[can you actually rectify and erase?]*
+- [ ] **GDPR Article 22 applicability assessed**: Notes: *[automated decision making with legal effect?]*
+- [ ] **EU AI Act risk tier determined**: Tier: *[minimal / limited / high / prohibited / GPAI]*
 
 #### MCP-specific
 
@@ -211,13 +211,13 @@ flowchart TB
 
 | Question | Answer | Pass/Fail |
 |---|---|---|
-| Provenance — who wrote it, how was it installed, is the version pinned, has anyone read the source? | | |
-| Process isolation — where does it run, as whom, what can it read, what network egress? | | |
-| Credential scope — what identities and tokens does it hold, are they scoped? | | |
-| Tool surface — what tools, read descriptions adversarially | | |
-| Cross-server exposure — what data could flow through it via the model? | | |
-| Update model — how updated, re-reviewed on update? | | |
-| Observability and kill switch — logged, killable in under five minutes? | | |
+| Provenance: who wrote it, how was it installed, is the version pinned, has anyone read the source? | | |
+| Process isolation: where does it run, as whom, what can it read, what network egress? | | |
+| Credential scope: what identities and tokens does it hold, are they scoped? | | |
+| Tool surface: what tools, read descriptions adversarially | | |
+| Cross-server exposure: what data could flow through it via the model? | | |
+| Update model: how updated, re-reviewed on update? | | |
+| Observability and kill switch: logged, killable in under five minutes? | | |
 
 *[Repeat for each server. Any server failing three or more questions should be a blocker.]*
 
@@ -315,7 +315,7 @@ flowchart TB
 
 *[Tick each item or mark N/A with explanation. A "good enough" threat model ticks all applicable items.]*
 
-#### Question 1 — What are we working on?
+#### Question 1 - What are we working on?
 
 - [ ] DFD reflects the system as it will actually ship, not an aspirational version
 - [ ] Trust boundaries drawn explicitly (not implied)
@@ -323,15 +323,15 @@ flowchart TB
 - [ ] AI-specific characteristics documented (Section 3.7)
 - [ ] Architect and senior engineer agree the diagram is correct
 
-#### Question 2 — What can go wrong?
+#### Question 2 - What can go wrong?
 
 - [ ] Every threat traceable to a DFD component
 - [ ] Every threat has a system-specific example, not a generic one
 - [ ] All four lenses applied where relevant (adversarial, structural, privacy, MCP)
-- [ ] Rejected threats captured alongside accepted ones (to show walked surface)
+- [ ] Rejected threats captured alongside accepted ones (to show covered surface)
 - [ ] Structural hazards explicitly considered (context rot, hallucination, transferability)
 
-#### Question 3 — What are we going to do about it?
+#### Question 3 - What are we going to do about it?
 
 - [ ] Every threat has a decision (Mitigate / Accept / Transfer / Avoid)
 - [ ] Every mitigation has owner and deadline
@@ -339,7 +339,7 @@ flowchart TB
 - [ ] Structural-first test applied
 - [ ] Traceability matrix complete
 
-#### Question 4 — Did we do a good enough job?
+#### Question 4 - Did we do a good enough job?
 
 - [ ] Threat model is versioned
 - [ ] Next review trigger agreed and recorded
@@ -457,7 +457,7 @@ A few practical points worth keeping in mind as you complete this template:
 
 **The mitigation matrix is the operational artefact.** Most of this document is context; the matrix is what the team actually works from. Keep it current even if the rest of the document goes stale. If the matrix says mitigation X is owned by person Y with deadline Z, that row should be trackable in whatever system you manage work in.
 
-**Capture rejected threats, not just accepted ones.** A threat model that only lists confirmed threats tells a reviewer nothing about the surface you walked. Including the rejected threats with a brief rationale gives the reviewer confidence that you considered the possibility and chose not to treat it.
+**Capture rejected threats, not just accepted ones.** A threat model that only lists confirmed threats tells a reviewer nothing about the surface you covered. Including the rejected threats with a brief rationale gives the reviewer confidence that you considered the possibility and chose not to treat it.
 
 **Residual risk summary is for executives.** It is the one section in this document that a non-technical stakeholder will read. Write it accordingly: plain English, no jargon, honest about what remains unresolved. If you find yourself hedging, the accepted risks section is probably dodging something.
 
