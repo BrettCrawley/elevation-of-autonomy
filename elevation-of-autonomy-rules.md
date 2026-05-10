@@ -2,8 +2,19 @@
 
 *A card-based threat modelling deck for AI, LLM and agentic systems*
 
+**Copyright 2026 Brett Crawley.**
+The cards were created by Brett Crawley
 **Version 0.1**
 **Creative Commons Attribution-ShareAlike 4.0**
+
+## Acknowledgements
+- The cards were inspired by the EoP game by **Adam Shostack**.
+- The threats were inspired by the OWASP LLM, Agent and MCP Top 10 and the publications by the **OWASP Foundation**.
+- The Boudary Transfer, Geometric Attack and Adversarial Subspace cards were inspired by the work of **Disesdi Shoshana Cox**.
+- The inspiration for the privacy cards came from the work of **Mark Vinkovits** for his EoP Privacy Extension, **Marko Hämäläinen**,
+**Laura Noukka**, **Hiski Ruhanen**, **Ilona Varis**, and **Antti Vähä-Sipilä** for their Elevation of Privacy and **Kim Wuyts** for LINDDUN Go.
+
+
 
 ---
 

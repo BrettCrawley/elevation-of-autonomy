@@ -2,7 +2,10 @@
 
 *Session facilitation notes for the card-based threat modelling deck*
 
+**Copyright 2026 Brett Crawley.**
+This companion Guide was created by Brett Crawley
 **Version 0.1**
+**Creative Commons Attribution-ShareAlike 4.0**
 
 ---
 

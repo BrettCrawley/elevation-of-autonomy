@@ -2,7 +2,10 @@
 
 *A card-based threat modelling deck for AI, LLM and agentic systems*
 
-**Version 0.1: play-test release**
+**Copyright 2026 Brett Crawley.**
+The cards were created by Brett Crawley
+**Version 0.1**
+**Creative Commons Attribution-ShareAlike 4.0**
 
 ---
 

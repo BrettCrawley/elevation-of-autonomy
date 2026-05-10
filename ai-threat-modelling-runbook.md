@@ -2,6 +2,11 @@
 
 *A facilitator's checklist for running design-time threat modelling sessions on AI-powered systems*
 
+**Copyright 2026 Brett Crawley.**
+This runbook was created by Brett Crawley
+**Version 0.1**
+**Creative Commons Attribution-ShareAlike 4.0**
+
 ---
 
 ## How to use this runbook

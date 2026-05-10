@@ -2,6 +2,11 @@
 
 *Post-session artefact template for AI, LLM and agentic systems*
 
+**Copyright 2026 Brett Crawley.**
+This template was created by Brett Crawley
+**Version 0.1**
+**Creative Commons Attribution-ShareAlike 4.0**
+
 ---
 
 ## How to use this template

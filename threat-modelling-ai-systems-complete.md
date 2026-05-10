@@ -2,6 +2,11 @@
 
 *A practitioner's reference, structured around the Threat Modeling Manifesto*
 
+**Copyright 2026 Brett Crawley.**
+This worked example threat model was created by Brett Crawley
+**Version 0.1**
+**Creative Commons Attribution-ShareAlike 4.0**
+
 ---
 
 ## How to use this document
