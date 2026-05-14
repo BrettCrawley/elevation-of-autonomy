@@ -68,6 +68,8 @@ Thirty cards in five suits. Four suits mirror EoP's structure (five cards each f
 
 Each card follows the format from my book: card name, card description quote, example threat, reference mapping (OWASP LLM, ASI, LINDDUN, T.R.I.M., CAPEC where applicable), and suggested mitigations.
 
+![3D of the box](3D_box_CARD_eoa.jpg "3D representation of the card box")
+
 ## The ♠ Spades suit - Adversarial Threats
 
 ### ♠ A - Prompt Injection
