@@ -8,6 +8,8 @@ Over the past few weeks I've been building out a practical toolkit for threat mo
 
 So I've built something closer to the ground. A four-part playbook: a reference document, a facilitator's runbook, a post-session template, and a new card deck *Elevation of Autonomy*  that extends the card-based threat modelling tradition from Adam Shostack's EoP and F-Secure's Elevation of Privacy into the AI and agentic space.
 
+You can buy the physical decks here: [CyberSecGames](https://cybersecgames.com/collections/artificial-intelligece/products/elevation-of-autonomy) 
+
 This post pulls it all together. It's long. I've structured it so you can skim the headers and dive into whichever part matches what you're trying to do today.
 
 ## Two concepts to get to grips with before we dive in
